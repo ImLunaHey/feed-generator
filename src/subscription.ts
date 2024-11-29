@@ -12,6 +12,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       uri: create.uri,
       cid: create.cid,
       text: create.record.text,
+      langs: create.record.langs?.join(',') ?? '',
       indexedAt: new Date().toISOString(),
     }));
 

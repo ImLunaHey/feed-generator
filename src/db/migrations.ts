@@ -16,6 +16,7 @@ migrations['001'] = {
       .addColumn('cid', 'varchar', (col) => col.notNull())
       .addColumn('indexedAt', 'varchar', (col) => col.notNull())
       .addColumn('text', 'varchar', (col) => col.notNull())
+      .addColumn('langs', 'varchar', (col) => col.notNull())
       .execute();
     await db.schema
       .createTable('sub_state')
