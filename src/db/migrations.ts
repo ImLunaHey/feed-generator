@@ -1,12 +1,12 @@
-import { Kysely, Migration, MigrationProvider } from 'kysely'
+import { Kysely, Migration, MigrationProvider } from 'kysely';
 
-const migrations: Record<string, Migration> = {}
+const migrations: Record<string, Migration> = {};
 
 export const migrationProvider: MigrationProvider = {
   async getMigrations() {
-    return migrations
+    return migrations;
   },
-}
+};
 
 migrations['001'] = {
   async up(db: Kysely<unknown>) {
@@ -15,15 +15,16 @@ migrations['001'] = {
       .addColumn('uri', 'varchar', (col) => col.primaryKey())
       .addColumn('cid', 'varchar', (col) => col.notNull())
       .addColumn('indexedAt', 'varchar', (col) => col.notNull())
-      .execute()
+      .addColumn('text', 'varchar', (col) => col.notNull())
+      .execute();
     await db.schema
       .createTable('sub_state')
       .addColumn('service', 'varchar', (col) => col.primaryKey())
       .addColumn('cursor', 'integer', (col) => col.notNull())
-      .execute()
+      .execute();
   },
   async down(db: Kysely<unknown>) {
-    await db.schema.dropTable('post').execute()
-    await db.schema.dropTable('sub_state').execute()
+    await db.schema.dropTable('post').execute();
+    await db.schema.dropTable('sub_state').execute();
   },
-}
+};
