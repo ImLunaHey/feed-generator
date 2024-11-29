@@ -31,7 +31,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           create.record.embed?.images as {
             alt: string;
           }[]
-        ).some((img) => img.alt),
+        ).some((img) => img.alt.trim().length > 0),
         indexedAt: new Date().toISOString(),
       }));
     if (postsToCreate.length > 0) {
