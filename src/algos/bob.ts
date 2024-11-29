@@ -17,8 +17,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .selectFrom('post')
     .select(['post.uri', 'post.cid', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
     .orderBy('post.likes', 'desc')
-    .orderBy('post.replies', 'desc')
-    .limit(1_000)
+    .limit(limit)
     .execute();
 
   console.info(
@@ -26,6 +25,8 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
       posts.reduce((acc, post) => acc + post.likeCount, 0) / posts.length
     }`,
   );
+
+  console.info(`[bob] posts`, JSON.stringify(posts, null, 2));
 
   const scoredPosts = posts.map((post) => {
     const postTime = new Date(post.indexedAt).getTime() / 1000;
