@@ -49,6 +49,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
         score: finalScore,
       };
     })
+    .filter((post) => post.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
