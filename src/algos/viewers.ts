@@ -2,11 +2,25 @@ import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton';
 import { AppContext } from '../config';
 
 // max 15 chars
-export const shortname = 'cats';
+export const shortname = 'viewers';
 
-export const requiresAuth = false;
+export const requiresAuth = true;
 
-export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
+const hasSeen = new Map<string, Date>();
+
+// every hour clear out the hasSeen set
+setInterval(() => {
+  const now = new Date();
+  for (const [did, lastSeen] of hasSeen.entries()) {
+    if (now.getTime() - lastSeen.getTime() > 1000 * 60 * 60) {
+      hasSeen.delete(did);
+    }
+  }
+}, 1000 * 60 * 60);
+
+export const handler = async (ctx: AppContext, params: QueryParams, requesterDid: string) => {
+  hasSeen.set(requesterDid, new Date());
+
   const limit = Math.min(params.limit ?? 50, 100);
 
   let builder = ctx.db
@@ -14,7 +28,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
-    .where('post.text', 'like', '%cat%')
+    .where('post.author', 'in', [...hasSeen.keys()])
     .limit(limit);
 
   if (params.cursor) {

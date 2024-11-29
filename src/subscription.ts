@@ -9,6 +9,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsToDelete = ops.posts.deletes.map((del) => del.uri);
     const postsToCreate = ops.posts.creates.map((create) => ({
+      author: create.author,
       uri: create.uri,
       cid: create.cid,
       text: create.record.text,

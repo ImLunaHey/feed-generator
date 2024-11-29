@@ -5,6 +5,7 @@ import * as cats from './cats';
 import * as english from './lang/en';
 import * as dutch from './lang/nl';
 import * as luna from './luna';
+import * as viewers from './viewers';
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams, requesterDid?: string) => Promise<AlgoOutput>;
 
@@ -20,6 +21,7 @@ const algos: Record<
   [english.shortname]: english,
   [dutch.shortname]: dutch,
   [luna.shortname]: luna,
+  [viewers.shortname]: viewers,
 };
 
 export default algos;
