@@ -33,17 +33,19 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     // Reddit-style scoring
     // Score = (P - 1) / (T + 2)^G
     // where P = points (likes), T = time since submission in hours, G = gravity
-    const points = Number(post.likeCount) || 1; // Ensure minimum of 1 point
+    const points = Number(post.likeCount) + 1; // Ensure minimum of 1 point
     const hours = timeDiff / 3600;
 
     // Basic hot score
-    const score = (points - 1) / Math.pow(hours + 2, GRAVITY);
+    const score = points / Math.pow(hours + 2, GRAVITY);
 
     // Controversy modifier based on reply count
     const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
 
     // Final score combining hot score and controversy
     const finalScore = score + controversyBonus;
+
+    console.log('Likes:', post.likeCount, 'Replies:', post.replyCount, 'Time:', hours, 'Score:', finalScore);
 
     return {
       ...post,
