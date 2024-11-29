@@ -38,7 +38,15 @@ migrations['002'] = {
     await db.schema
       .alterTable('post')
       .addColumn('labels', 'varchar', (col) => col.notNull().defaultTo(''))
+      .execute();
+
+    await db.schema
+      .alterTable('post')
       .addColumn('hasImage', 'boolean', (col) => col.notNull().defaultTo(false))
+      .execute();
+
+    await db.schema
+      .alterTable('post')
       .addColumn('hasAlt', 'boolean', (col) => col.notNull().defaultTo(false))
       .execute();
   },
