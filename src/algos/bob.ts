@@ -7,7 +7,17 @@ export const requiresAuth = false;
 // Constants for score calculation
 const GRAVITY = 1.8;
 
-const scorePost = (post) => {
+const scorePost = (post: {
+  uri: string;
+  cid: string;
+  indexedAt: string;
+  text: string;
+  labels: string;
+  hasImage: number;
+  hasAlt: number;
+  replyCount: number;
+  likeCount: number;
+}) => {
   const bannedWords = [
     'maga',
     'trump',
@@ -40,7 +50,7 @@ const scorePost = (post) => {
   }
 
   // Penalize posts with images but no alt text
-  if (post.hasImage && !post.hasAlt) {
+  if (post.hasImage === 1 && post.hasAlt === 0) {
     return {
       ...post,
       score: 0,

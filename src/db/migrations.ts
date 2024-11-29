@@ -54,3 +54,24 @@ migrations['002'] = {
     await db.schema.alterTable('post').dropColumn('labels').execute();
   },
 };
+
+migrations['003'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('hasImage').execute();
+
+    await db.schema
+      .alterTable('post')
+      .addColumn('hasImage', 'integer', (col) => col.notNull().defaultTo(0))
+      .execute();
+
+    await db.schema.alterTable('post').dropColumn('hasAlt').execute();
+
+    await db.schema
+      .alterTable('post')
+      .addColumn('hasAlt', 'integer', (col) => col.notNull().defaultTo(0))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('labels').execute();
+  },
+};
