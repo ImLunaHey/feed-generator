@@ -7,9 +7,7 @@ export const shortname = 'luna';
 export const handler = async (ctx: AppContext, params: QueryParams) => {
   const feed = [
     {
-      post: {
-        uri: 'at://imlunahey.com/app.bsky.feed.post/3lc364tfdhk2l',
-      },
+      post: 'at://imlunahey.com/app.bsky.feed.post/3lc364tfdhk2l',
     },
   ];
 
