@@ -35,6 +35,14 @@ export type Post = {
    * Comma seperated list of languages
    */
   langs: Langs;
+  /**
+   * Number of likes
+   */
+  likes: number;
+  /**
+   * Number of replies
+   */
+  replies: number;
 };
 
 export type SubState = {

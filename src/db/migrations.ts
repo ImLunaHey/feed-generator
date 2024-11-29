@@ -18,6 +18,8 @@ migrations['001'] = {
       .addColumn('indexedAt', 'varchar', (col) => col.notNull())
       .addColumn('text', 'varchar', (col) => col.notNull())
       .addColumn('langs', 'varchar', (col) => col.notNull())
+      .addColumn('likes', 'integer', (col) => col.notNull().defaultTo(0))
+      .addColumn('replies', 'integer', (col) => col.notNull().defaultTo(0))
       .execute();
     await db.schema
       .createTable('sub_state')
