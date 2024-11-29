@@ -26,26 +26,17 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
   const scoredPosts = posts.map((post) => {
     const postTime = new Date(post.indexedAt).getTime() / 1000;
     const nowSeconds = Date.now() / 1000;
-
-    // Calculate time difference in seconds
     const timeDiff = nowSeconds - postTime;
 
-    // Reddit-style scoring
-    // Score = (P - 1) / (T + 2)^G
-    // where P = points (likes), T = time since submission in hours, G = gravity
-    const points = Number(post.likeCount) + 1; // Ensure minimum of 1 point
+    // Start with points = likes + 1 to avoid zero
+    const points = Number(post.likeCount) + 1;
     const hours = timeDiff / 3600;
 
-    // Basic hot score
+    // Remove the -1 from the formula since we want posts with 0 likes to still have a base score
     const score = points / Math.pow(hours + 2, GRAVITY);
 
-    // Controversy modifier based on reply count
     const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
-
-    // Final score combining hot score and controversy
     const finalScore = score + controversyBonus;
-
-    console.log('Likes:', post.likeCount, 'Replies:', post.replyCount, 'Time:', hours, 'Score:', finalScore);
 
     return {
       ...post,
