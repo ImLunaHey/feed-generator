@@ -94,7 +94,17 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
   // First, get all posts ordered by potential score indicators
   const posts = await ctx.db
     .selectFrom('post')
-    .select(['post.uri', 'post.cid', 'post.text', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
+    .select([
+      'post.uri',
+      'post.cid',
+      'post.text',
+      'post.indexedAt',
+      'post.replies as replyCount',
+      'post.likes as likeCount',
+      'post.labels',
+      'post.hasImage',
+      'post.hasAlt',
+    ])
     .orderBy('post.likes', 'desc')
     .orderBy('post.replies', 'desc')
     .limit(1_000)

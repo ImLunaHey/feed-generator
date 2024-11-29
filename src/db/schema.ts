@@ -47,6 +47,14 @@ export type Post = {
    * Comma seperated list of labels
    */
   labels: string;
+  /**
+   * Whether the post has an image
+   */
+  hasImage: boolean;
+  /**
+   * Whether the post has an alt text
+   */
+  hasAlt: boolean;
 };
 
 export type SubState = {
