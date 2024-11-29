@@ -1,30 +1,21 @@
 import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton';
 import { AppContext } from '../config';
 
-// max 15 chars
 export const shortname = 'bob';
 export const requiresAuth = false;
 
 // Constants for score calculation
-const GRAVITY = 1.8; // Controls how quickly posts fall off
-const TIMEBASE = 45000; // ~12.5 hours in seconds
+const GRAVITY = 1.8;
 
 const scorePost = (post) => {
   const postTime = new Date(post.indexedAt).getTime() / 1000;
   const nowSeconds = Date.now() / 1000;
   const timeDiff = nowSeconds - postTime;
-
-  // Start with points = likes + 1 to avoid zero
   const points = Number(post.likeCount) + 1;
   const hours = timeDiff / 3600;
-
-  // Remove the -1 from the formula since we want posts with 0 likes to still have a base score
   const score = points / Math.pow(hours + 2, GRAVITY);
-
-  // Add a bonus for posts with more replies
   const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
 
-  // Remove points for posts that include banned words
   const bannedWords = [
     'maga',
     'trump',
@@ -47,52 +38,60 @@ const scorePost = (post) => {
     'sell',
     'vbucks',
   ];
-  if (bannedWords.some((word) => post.text.toLowerCase().includes(word))) {
+
+  if (bannedWords.some((word) => post.text?.toLowerCase().includes(word))) {
     return {
       ...post,
       score: 0,
     };
   }
 
-  // Final score is the score plus the controversy bonus minus the banned word penalty
-  const finalScore = score + controversyBonus;
-
   return {
     ...post,
-    score: finalScore,
+    score: score + controversyBonus,
   };
 };
 
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
   const limit = Math.min(params.limit ?? 50, 100);
 
-  // Get top 1k posts by likes and replies
+  // Decode cursor if provided
+  let cursorData: { score: number; cid: string } | undefined;
+  if (params.cursor) {
+    try {
+      const [score, cid] = Buffer.from(params.cursor, 'base64').toString().split(':');
+      cursorData = { score: parseFloat(score), cid };
+    } catch (error) {
+      console.error('Invalid cursor:', error);
+    }
+  }
+
+  // First, get all posts ordered by potential score indicators
   const posts = await ctx.db
     .selectFrom('post')
-    .select(['post.uri', 'post.cid', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
+    .select(['post.uri', 'post.cid', 'post.text', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
     .orderBy('post.likes', 'desc')
     .orderBy('post.replies', 'desc')
     .limit(1_000)
     .execute();
 
-  console.info(
-    `[bob] fetched ${posts.length} posts, averge likes is ${
-      posts.reduce((acc, post) => acc + post.likeCount, 0) / posts.length
-    }`,
-  );
-
-  const scoredPosts = posts.map(scorePost);
-
-  console.info(
-    `[bob] scored ${scoredPosts.length} posts, average score is ${
-      scoredPosts.reduce((acc, post) => acc + post.score, 0) / scoredPosts.length
-    }`,
-  );
-
-  const processed = scoredPosts
+  // Score all posts
+  const scoredPosts = posts
+    .map(scorePost)
     .filter((post) => post.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+    .sort((a, b) => b.score - a.score);
+
+  // Apply cursor pagination after scoring
+  let startIndex = 0;
+  if (cursorData) {
+    startIndex = scoredPosts.findIndex(
+      (post) => post.score < cursorData.score || (post.score === cursorData.score && post.cid < cursorData.cid),
+    );
+    startIndex = startIndex === -1 ? scoredPosts.length : startIndex;
+  }
+
+  // Get the page of posts
+  const processed = scoredPosts.slice(startIndex, startIndex + limit);
 
   console.info(`[bob] serving ${processed.length} posts`);
 
@@ -100,9 +99,10 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     post: post.uri,
   }));
 
+  // Create cursor based on score instead of timestamp
   const cursor =
     processed.length > 0
-      ? Buffer.from(`${processed[processed.length - 1].indexedAt}:${processed[processed.length - 1].cid}`).toString('base64')
+      ? Buffer.from(`${processed[processed.length - 1].score}:${processed[processed.length - 1].cid}`).toString('base64')
       : undefined;
 
   return {
