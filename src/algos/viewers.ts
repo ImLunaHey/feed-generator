@@ -22,13 +22,16 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
   hasSeen.set(requesterDid, new Date());
 
   const limit = Math.min(params.limit ?? 50, 100);
+  const viewers = [...hasSeen.keys()];
+
+  console.info(`[${shortname}] seen ${viewers.length} viewers`);
 
   let builder = ctx.db
     .selectFrom('post')
     .selectAll()
+    .where('post.author', 'in', viewers.length ? viewers : ['did:plc:k6acu4chiwkixvdedcmdgmal'])
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
-    .where('post.author', 'in', [...hasSeen.keys()])
     .limit(limit);
 
   if (params.cursor) {
