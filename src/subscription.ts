@@ -9,6 +9,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsToDelete = ops.posts.deletes.map((del) => del.uri);
     if (postsToDelete.length > 0) {
+      console.info(`[subscription] deleted ${postsToDelete.length} posts`);
       await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).execute();
     }
 
@@ -28,6 +29,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         indexedAt: new Date().toISOString(),
       }));
     if (postsToCreate.length > 0) {
+      console.info(`[subscription] created ${postsToCreate.length} posts`);
       await this.db
         .insertInto('post')
         .values(postsToCreate)
@@ -37,12 +39,13 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsToUnlike = ops.likes.deletes.map((del) => del.uri);
     if (postsToUnlike.length > 0) {
+      console.info(`[subscription] unliked ${postsToUnlike.length} posts`);
       await this.db.transaction().execute(async (trx) => {
         for (const post of postsToUnlike) {
           await trx
             .updateTable('post')
             .set((eb) => ({
-              likes: eb('likes', '-', 1),
+              likes: eb('post.likes', '-', 1),
             }))
             .where('uri', '=', post)
             .execute();
@@ -52,12 +55,13 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsToLike = ops.likes.creates.map((create) => create.uri);
     if (postsToLike.length > 0) {
+      console.info(`[subscription] liked ${postsToLike.length} posts`);
       await this.db.transaction().execute(async (trx) => {
         for (const post of postsToLike) {
           await trx
             .updateTable('post')
             .set((eb) => ({
-              likes: eb('likes', '+', 1),
+              likes: eb('post.likes', '+', 1),
             }))
             .where('uri', '=', post)
             .execute();
@@ -67,6 +71,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsUnreposted = ops.reposts.deletes.map((del) => del.uri);
     if (postsUnreposted.length > 0) {
+      console.info(`[subscription] unreposted ${postsUnreposted.length} posts`);
       await this.db.transaction().execute(async (trx) => {
         for (const post of postsUnreposted) {
           await trx
@@ -82,6 +87,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsReposted = ops.reposts.creates.map((create) => create.uri);
     if (postsReposted.length > 0) {
+      console.info(`[subscription] reposted ${postsReposted.length} posts`);
       await this.db.transaction().execute(async (trx) => {
         for (const post of postsReposted) {
           await trx

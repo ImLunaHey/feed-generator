@@ -21,7 +21,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .limit(1_000)
     .execute();
 
-  console.info(`[bob] got ${posts.length} posts`);
+  console.info(`[bob] fetched ${posts.length} posts`);
 
   const scoredPosts = posts.map((post) => {
     const postTime = new Date(post.indexedAt).getTime() / 1000;
@@ -62,7 +62,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
-  console.info(`[bob] processed ${processed.length} posts`);
+  console.info(`[bob] serving ${processed.length} posts`);
 
   const feed = processed.map((post) => ({
     post: post.uri,
