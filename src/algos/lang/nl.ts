@@ -4,7 +4,9 @@ import { AppContext } from '../../config';
 // max 15 chars
 export const shortname = 'lang-nl';
 
-export const handler = async (ctx: AppContext, params: QueryParams) => {
+export const requiresAuth = false;
+
+export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
   let builder = ctx.db
     .selectFrom('post')
     .selectAll()

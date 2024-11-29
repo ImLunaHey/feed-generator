@@ -6,14 +6,20 @@ import * as english from './lang/en';
 import * as dutch from './lang/nl';
 import * as luna from './luna';
 
-type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>;
+type AlgoHandler = (ctx: AppContext, params: QueryParams, requesterDid?: string) => Promise<AlgoOutput>;
 
-const algos: Record<string, AlgoHandler> = {
-  [bob.shortname]: bob.handler,
-  [cats.shortname]: cats.handler,
-  [english.shortname]: english.handler,
-  [dutch.shortname]: dutch.handler,
-  [luna.shortname]: luna.handler,
+const algos: Record<
+  string,
+  {
+    handler: AlgoHandler;
+    requiresAuth?: boolean;
+  }
+> = {
+  [bob.shortname]: bob,
+  [cats.shortname]: cats,
+  [english.shortname]: english,
+  [dutch.shortname]: dutch,
+  [luna.shortname]: luna,
 };
 
 export default algos;

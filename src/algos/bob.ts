@@ -4,7 +4,9 @@ import { AppContext } from '../config';
 // max 15 chars
 export const shortname = 'bob';
 
-export const handler = async (ctx: AppContext, params: QueryParams) => {
+export const requiresAuth = false;
+
+export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
   const limit = Math.min(params.limit ?? 50, 100);
 
   const posts = await ctx.db

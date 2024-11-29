@@ -4,14 +4,29 @@ import { AppContext } from '../config';
 // max 15 chars
 export const shortname = 'luna';
 
-export const handler = async (ctx: AppContext, params: QueryParams) => {
-  const feed = [
-    {
-      post: 'at://did:plc:k6acu4chiwkixvdedcmdgmal/app.bsky.feed.post/3lc364tfdhk2l',
-    },
-  ];
+export const requiresAuth = true;
+
+const hasSeen = new Set<string>();
+
+export const handler = async (ctx: AppContext, params: QueryParams, requesterDid: string) => {
+  if (hasSeen.has(requesterDid)) {
+    return {
+      feed: [
+        {
+          post: 'at://did:plc:k6acu4chiwkixvdedcmdgmal/app.bsky.feed.post/3lc3kim3d4c2z',
+        },
+      ],
+    };
+  }
+
+  hasSeen.add(requesterDid);
 
   return {
-    feed,
+    feed: [
+      {
+        // test post please ignore
+        post: 'at://did:plc:k6acu4chiwkixvdedcmdgmal/app.bsky.feed.post/3lc364tfdhk2l',
+      },
+    ],
   };
 };
