@@ -25,6 +25,13 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         langs: create.record.langs?.join(',') ?? '',
         likes: 0,
         replies: 0,
+        labels: (create.record.labels?.values as { value: string }[]).map((label) => label.value).join(',') ?? '',
+        hasImage: create.record.embed?.$type === 'app.bsky.embed.images',
+        hasAlt: (
+          create.record.embed?.images as {
+            alt: string;
+          }[]
+        ).some((img) => img.alt),
         indexedAt: new Date().toISOString(),
       }));
     if (postsToCreate.length > 0) {

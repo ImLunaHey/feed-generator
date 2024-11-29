@@ -32,3 +32,17 @@ migrations['001'] = {
     await db.schema.dropTable('sub_state').execute();
   },
 };
+
+migrations['002'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('post')
+      .addColumn('labels', 'varchar', (col) => col.notNull().defaultTo(''))
+      .addColumn('hasImage', 'boolean', (col) => col.notNull().defaultTo(false))
+      .addColumn('hasAlt', 'boolean', (col) => col.notNull().defaultTo(false))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('labels').execute();
+  },
+};

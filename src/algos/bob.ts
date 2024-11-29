@@ -8,14 +8,6 @@ export const requiresAuth = false;
 const GRAVITY = 1.8;
 
 const scorePost = (post) => {
-  const postTime = new Date(post.indexedAt).getTime() / 1000;
-  const nowSeconds = Date.now() / 1000;
-  const timeDiff = nowSeconds - postTime;
-  const points = Number(post.likeCount) + 1;
-  const hours = timeDiff / 3600;
-  const score = points / Math.pow(hours + 2, GRAVITY);
-  const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
-
   const bannedWords = [
     'maga',
     'trump',
@@ -39,12 +31,45 @@ const scorePost = (post) => {
     'vbucks',
   ];
 
+  // Penalize posts with banned words
   if (bannedWords.some((word) => post.text?.toLowerCase().includes(word))) {
     return {
       ...post,
       score: 0,
     };
   }
+
+  // Penalize posts with images but no alt text
+  if (post.hasImage && !post.hasAlt) {
+    return {
+      ...post,
+      score: 0,
+    };
+  }
+
+  // Penalize posts with no text
+  if (!post.text) {
+    return {
+      ...post,
+      score: 0,
+    };
+  }
+
+  // Penalize posts with nsfw labels
+  if (post.labels?.includes('nsfw') || post.labels?.includes('porn')) {
+    return {
+      ...post,
+      score: 0,
+    };
+  }
+
+  const postTime = new Date(post.indexedAt).getTime() / 1000;
+  const nowSeconds = Date.now() / 1000;
+  const timeDiff = nowSeconds - postTime;
+  const points = Number(post.likeCount) + 1;
+  const hours = timeDiff / 3600;
+  const score = points / Math.pow(hours + 2, GRAVITY);
+  const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
 
   return {
     ...post,

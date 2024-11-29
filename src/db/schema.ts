@@ -43,6 +43,10 @@ export type Post = {
    * Number of replies
    */
   replies: number;
+  /**
+   * Comma seperated list of labels
+   */
+  labels: string;
 };
 
 export type SubState = {
