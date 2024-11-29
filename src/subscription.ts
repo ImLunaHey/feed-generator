@@ -35,22 +35,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         .execute();
     }
 
-    const postsToUnlike = ops.likes.deletes.map((del) => del.uri);
-    if (postsToUnlike.length > 0) {
-      await this.db.transaction().execute(async (trx) => {
-        for (const post of postsToUnlike) {
-          await trx
-            .updateTable('post')
-            .set((eb) => ({
-              likes: eb('post.likes', '-', 1),
-            }))
-            .where('uri', '=', post)
-            .execute();
-        }
-      });
-    }
-
-    const postsToLike = ops.likes.creates.map((create) => create.uri);
+    const postsToLike = ops.likes.creates.map((create) => create.record.subject.uri);
     if (postsToLike.length > 0) {
       await this.db.transaction().execute(async (trx) => {
         for (const post of postsToLike) {
@@ -65,22 +50,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       });
     }
 
-    const postsUnreposted = ops.reposts.deletes.map((del) => del.uri);
-    if (postsUnreposted.length > 0) {
-      await this.db.transaction().execute(async (trx) => {
-        for (const post of postsUnreposted) {
-          await trx
-            .updateTable('post')
-            .set((eb) => ({
-              likes: eb('replies', '-', 1),
-            }))
-            .where('uri', '=', post)
-            .execute();
-        }
-      });
-    }
-
-    const postsReposted = ops.reposts.creates.map((create) => create.uri);
+    const postsReposted = ops.reposts.creates.map((create) => create.record.subject.uri);
     if (postsReposted.length > 0) {
       await this.db.transaction().execute(async (trx) => {
         for (const post of postsReposted) {
