@@ -18,7 +18,10 @@ export default function (server: Server, ctx: AppContext) {
     const requiresAuth = algos[feedUri.rkey].requiresAuth;
     const requesterDid = requiresAuth ? await validateAuth(req, ctx.cfg.serviceDid, ctx.didResolver) : undefined;
 
-    const body = await algo(ctx, params, requesterDid);
+    const body = await algo(ctx, params, requesterDid).catch((err) => {
+      console.info('Error in algorithm', feedUri.rkey, err);
+      throw err;
+    });
     return {
       encoding: 'application/json',
       body: body,
