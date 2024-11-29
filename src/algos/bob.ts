@@ -9,10 +9,64 @@ export const requiresAuth = false;
 const GRAVITY = 1.8; // Controls how quickly posts fall off
 const TIMEBASE = 45000; // ~12.5 hours in seconds
 
+const scorePost = (post) => {
+  const postTime = new Date(post.indexedAt).getTime() / 1000;
+  const nowSeconds = Date.now() / 1000;
+  const timeDiff = nowSeconds - postTime;
+
+  // Start with points = likes + 1 to avoid zero
+  const points = Number(post.likeCount) + 1;
+  const hours = timeDiff / 3600;
+
+  // Remove the -1 from the formula since we want posts with 0 likes to still have a base score
+  const score = points / Math.pow(hours + 2, GRAVITY);
+
+  // Add a bonus for posts with more replies
+  const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
+
+  // Remove points for posts that include banned words
+  const bannedWords = [
+    'maga',
+    'trump',
+    'biden',
+    'covid',
+    'vaccine',
+    'election',
+    'politics',
+    'racism',
+    'hate',
+    'war',
+    'bomb',
+    'gun',
+    'violence',
+    'kill',
+    'donate',
+    'money',
+    'fund',
+    'buy',
+    'sell',
+    'vbucks',
+  ];
+  if (bannedWords.some((word) => post.text.toLowerCase().includes(word))) {
+    return {
+      ...post,
+      score: 0,
+    };
+  }
+
+  // Final score is the score plus the controversy bonus minus the banned word penalty
+  const finalScore = score + controversyBonus;
+
+  return {
+    ...post,
+    score: finalScore,
+  };
+};
+
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
   const limit = Math.min(params.limit ?? 50, 100);
 
-  // Get posts with their like counts
+  // Get top 1k posts by likes and replies
   const posts = await ctx.db
     .selectFrom('post')
     .select(['post.uri', 'post.cid', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
@@ -27,26 +81,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     }`,
   );
 
-  const scoredPosts = posts.map((post) => {
-    const postTime = new Date(post.indexedAt).getTime() / 1000;
-    const nowSeconds = Date.now() / 1000;
-    const timeDiff = nowSeconds - postTime;
-
-    // Start with points = likes + 1 to avoid zero
-    const points = Number(post.likeCount) + 1;
-    const hours = timeDiff / 3600;
-
-    // Remove the -1 from the formula since we want posts with 0 likes to still have a base score
-    const score = points / Math.pow(hours + 2, GRAVITY);
-
-    const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
-    const finalScore = score + controversyBonus;
-
-    return {
-      ...post,
-      score: finalScore,
-    };
-  });
+  const scoredPosts = posts.map(scorePost);
 
   console.info(
     `[bob] scored ${scoredPosts.length} posts, average score is ${
@@ -63,7 +98,6 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
 
   const feed = processed.map((post) => ({
     post: post.uri,
-    reason: `score: ${post.score.toFixed(2)}`,
   }));
 
   const cursor =
