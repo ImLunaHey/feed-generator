@@ -27,7 +27,7 @@ export default function (server: Server, ctx: AppContext) {
         body: body,
       };
     } catch (error) {
-      console.error('Error in feed generation', error);
+      console.error('Error in feed generation', JSON.stringify(error));
       throw error;
     }
   });
