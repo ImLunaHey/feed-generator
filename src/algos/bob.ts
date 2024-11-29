@@ -63,6 +63,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
 
   const feed = processed.map((post) => ({
     post: post.uri,
+    reason: `score: ${post.score.toFixed(2)}`,
   }));
 
   const cursor =
