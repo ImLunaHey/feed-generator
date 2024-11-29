@@ -50,11 +50,11 @@ export type Post = {
   /**
    * Whether the post has an image
    */
-  hasImage: boolean;
+  hasImage: number;
   /**
    * Whether the post has an alt text
    */
-  hasAlt: boolean;
+  hasAlt: number;
 };
 
 export type SubState = {
