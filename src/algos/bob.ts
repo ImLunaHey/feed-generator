@@ -21,7 +21,11 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .limit(1_000)
     .execute();
 
-  console.info(`[bob] fetched ${posts.length} posts`);
+  console.info(
+    `[bob] fetched ${posts.length} posts, averge likes is ${
+      posts.reduce((acc, post) => acc + post.likeCount, 0) / posts.length
+    }`,
+  );
 
   const scoredPosts = posts.map((post) => {
     const postTime = new Date(post.indexedAt).getTime() / 1000;
