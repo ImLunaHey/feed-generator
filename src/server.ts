@@ -55,8 +55,8 @@ export class FeedGenerator {
 
     // once every 10 mins clear out old events
     setInterval(() => {
-      // delete all posts older than 24 hours
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // delete all posts older than 1 hour
+      const cutoff = new Date(Date.now() - 60 * 60 * 1000);
       db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
     }, 10 * 60 * 1000);
 
