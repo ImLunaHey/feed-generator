@@ -1,35 +1,47 @@
-import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import { AppContext } from '../config'
+import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton';
+import { AppContext } from '../config';
 
 // max 15 chars
-export const shortname = 'bob'
+export const shortname = 'bob';
 
 export const handler = async (ctx: AppContext, params: QueryParams) => {
-  let builder = ctx.db
+  const limit = Math.min(params.limit ?? 50, 100);
+
+  const posts = await ctx.db
     .selectFrom('post')
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
-    .limit(params.limit)
+    .limit(limit * 2)
+    .execute();
 
-  if (params.cursor) {
-    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-    builder = builder.where('post.indexedAt', '<', timeStr)
-  }
-  const res = await builder.execute()
+  const processed = posts
+    .map((post) => {
+      const age = Date.now() - new Date(post.indexedAt).getTime();
+      const hoursSincePosted = age / (1000 * 60 * 60);
 
-  const feed = res.map((row) => ({
-    post: row.uri,
-  }))
+      // Simple time-based score
+      const score = 1 / (1 + hoursSincePosted * 0.1);
 
-  let cursor: string | undefined
-  const last = res.at(-1)
-  if (last) {
-    cursor = new Date(last.indexedAt).getTime().toString(10)
-  }
+      return {
+        ...post,
+        score,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  const feed = processed.map((post) => ({
+    post: post.uri,
+  }));
+
+  const cursor =
+    processed.length > 0
+      ? Buffer.from(`${processed[processed.length - 1].indexedAt}:${processed[processed.length - 1].cid}`).toString('base64')
+      : undefined;
 
   return {
     cursor,
     feed,
-  }
-}
+  };
+};
