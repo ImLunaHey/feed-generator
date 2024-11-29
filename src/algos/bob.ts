@@ -51,12 +51,14 @@ const scorePost = (post: {
   }
 
   // Penalize posts with images but no alt text
-  if (post.hasImage === 1 && post.hasAlt === 0) {
+  if (post.hasImage && !post.hasAlt) {
     console.info(`[bob] post ${post.uri} has image but no alt text`);
     return {
       ...post,
       score: 0,
     };
+  } else if (post.hasImage && post.hasAlt) {
+    console.info(`[bob] post ${post.uri} has image and alt text`);
   }
 
   // Penalize posts with no text
@@ -84,7 +86,6 @@ const scorePost = (post: {
   const hours = timeDiff / 3600;
   const score = points / Math.pow(hours + 2, GRAVITY);
   const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
-  console.info(`[bob] post ${post.uri} has score ${score + controversyBonus}`);
 
   return {
     ...post,
