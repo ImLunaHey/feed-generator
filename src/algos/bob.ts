@@ -16,37 +16,37 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
   const posts = await ctx.db
     .selectFrom('post')
     .select(['post.uri', 'post.cid', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
-    .orderBy('post.indexedAt', 'desc')
-    .orderBy('post.cid', 'desc')
-    .limit(limit * 2)
+    .orderBy('post.likes', 'desc')
+    .orderBy('post.replies', 'desc')
+    .limit(1_000)
     .execute();
 
   const processed = posts
     .map((post) => {
-      // const postTime = new Date(post.indexedAt).getTime() / 1000;
-      // const nowSeconds = Date.now() / 1000;
+      const postTime = new Date(post.indexedAt).getTime() / 1000;
+      const nowSeconds = Date.now() / 1000;
 
-      // // Calculate time difference in seconds
-      // const timeDiff = nowSeconds - postTime;
+      // Calculate time difference in seconds
+      const timeDiff = nowSeconds - postTime;
 
-      // // Reddit-style scoring
-      // // Score = (P - 1) / (T + 2)^G
-      // // where P = points (likes), T = time since submission in hours, G = gravity
-      // const points = Number(post.likeCount) || 1; // Ensure minimum of 1 point
-      // const hours = timeDiff / 3600;
+      // Reddit-style scoring
+      // Score = (P - 1) / (T + 2)^G
+      // where P = points (likes), T = time since submission in hours, G = gravity
+      const points = Number(post.likeCount) || 1; // Ensure minimum of 1 point
+      const hours = timeDiff / 3600;
 
-      // // Basic hot score
-      // const score = (points - 1) / Math.pow(hours + 2, GRAVITY);
+      // Basic hot score
+      const score = (points - 1) / Math.pow(hours + 2, GRAVITY);
 
-      // // Controversy modifier based on reply count
-      // const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
+      // Controversy modifier based on reply count
+      const controversyBonus = Math.log(Math.max(post.replyCount || 0, 1)) / 100;
 
-      // // Final score combining hot score and controversy
-      // const finalScore = score + controversyBonus;
+      // Final score combining hot score and controversy
+      const finalScore = score + controversyBonus;
 
       return {
         ...post,
-        score: 1,
+        score: finalScore,
       };
     })
     .filter((post) => post.score > 0)
