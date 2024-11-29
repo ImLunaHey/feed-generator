@@ -17,7 +17,8 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .selectFrom('post')
     .select(['post.uri', 'post.cid', 'post.indexedAt', 'post.replies as replyCount', 'post.likes as likeCount'])
     .orderBy('post.likes', 'desc')
-    .limit(limit)
+    .orderBy('post.replies', 'desc')
+    .limit(1_000)
     .execute();
 
   console.info(
