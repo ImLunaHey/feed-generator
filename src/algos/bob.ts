@@ -26,8 +26,6 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     }`,
   );
 
-  console.info(`[bob] posts`, JSON.stringify(posts, null, 2));
-
   const scoredPosts = posts.map((post) => {
     const postTime = new Date(post.indexedAt).getTime() / 1000;
     const nowSeconds = Date.now() / 1000;
