@@ -61,7 +61,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     console.info(`generating algo=${feedUri.rkey} query=${JSON.stringify(ctx.req.query())}`);
 
     // Check if the feed algorithm is supported
-    const algo = algos[feedUri.rkey].handler;
+    const algo = algos[feedUri.rkey];
     if (!algo) throw new InvalidRequestError('Unsupported algorithm', 'UnsupportedAlgorithm');
 
     // Only check auth if the algorithm requires it
@@ -69,7 +69,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
 
     // Generate the feed
-    const response = await algo(
+    const response = await algo.handler(
       {
         db: ctx.get('db'),
         didResolver: ctx.get('didResolver'),

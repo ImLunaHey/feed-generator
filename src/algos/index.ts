@@ -8,6 +8,7 @@ import * as dutch from './lang/nl';
 import * as luna from './luna';
 import * as viewers from './viewers';
 import * as noAlt from './no-alt';
+import * as youtubeVideos from './youtube-videos';
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams, requesterDid?: string) => Promise<AlgoOutput>;
 
@@ -27,6 +28,7 @@ const algos: Record<
   [luna.shortname]: luna,
   [viewers.shortname]: viewers,
   [noAlt.shortname]: noAlt,
+  [youtubeVideos.shortname]: youtubeVideos,
 };
 
 export default algos;
