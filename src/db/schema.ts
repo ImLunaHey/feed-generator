@@ -55,6 +55,10 @@ export type Post = {
    * Whether the post has an alt text
    */
   hasAlt: number;
+  /**
+   * URL of the embedded content
+   */
+  embedUrl: string;
 };
 
 export type SubState = {

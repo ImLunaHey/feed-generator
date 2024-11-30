@@ -75,3 +75,15 @@ migrations['003'] = {
     await db.schema.alterTable('post').dropColumn('labels').execute();
   },
 };
+
+migrations['004'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('post')
+      .addColumn('embedUrl', 'varchar', (col) => col.notNull().defaultTo(''))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('embedUrl').execute();
+  },
+};

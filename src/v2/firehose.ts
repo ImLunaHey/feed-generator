@@ -26,6 +26,7 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
         )
           ? 1
           : 0,
+      embedUrl: event.commit.record.embed?.$type === 'app.bsky.embed.external' ? event.commit.record.embed.external.uri : '',
       indexedAt: new Date().toISOString(),
     })
     .onConflict((oc) => oc.doNothing())
