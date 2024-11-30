@@ -5,8 +5,7 @@ import { AtUri } from '@atproto/syntax';
 import { AuthRequiredError, InvalidRequestError, verifyJwt } from '@atproto/xrpc-server';
 import algos from '../algos';
 import { DidResolver, MemoryCache } from '@atproto/identity';
-
-const app = new Hono();
+import { createDb, Database } from '../db';
 
 const config = {
   hostname: process.env.FEEDGEN_HOSTNAME || 'example.com',
@@ -15,6 +14,23 @@ const config = {
   sqliteLocation: process.env.FEEDGEN_SQLITE_LOCATION || ':memory:',
   publisherDid: process.env.FEEDGEN_PUBLISHER_DID || 'did:example:alice',
 };
+
+const app = new Hono<{
+  Variables: {
+    db: Database;
+    didResolver: DidResolver;
+    config: typeof config;
+  };
+}>();
+
+const db = createDb(config.sqliteLocation);
+
+app.use('/*', async (ctx, next) => {
+  ctx.set('db', db);
+  ctx.set('didResolver', didResolver);
+  ctx.set('config', config);
+  return next();
+});
 
 const didCache = new MemoryCache();
 const didResolver = new DidResolver({
@@ -58,21 +74,28 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     const requiresAuth = algos[feedUri.rkey].requiresAuth;
     const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
 
+    // Generate the feed
     console.info(`feed=${feedUri.rkey} requesterDid=${requesterDid ?? 'unknown'} query=${JSON.stringify(ctx.req.query())}`);
-
-    // @TODO: Implement the actual feed generation
-    // const response = await algo(ctx, params, requesterDid);
-    // return ctx.json(response);
-
-    // for now return a static feed
-    return ctx.json({
-      cursor: undefined,
-      feed: [
-        {
-          post: 'at://did:plc:k6acu4chiwkixvdedcmdgmal/app.bsky.feed.post/3lc364tfdhk2l',
+    const response = await algo(
+      {
+        db: ctx.get('db'),
+        didResolver: ctx.get('didResolver'),
+        cfg: {
+          ...ctx.get('config'),
+          port: Number(ctx.get('config').port),
+          listenhost: ctx.get('config').hostname,
+          subscriptionEndpoint: 'wss://bsky.network',
+          subscriptionReconnectDelay: 3000,
         },
-      ],
-    });
+      },
+      {
+        feed,
+        limit: Number(ctx.req.query('limit')) || 50,
+        cursor: ctx.req.query('cursor'),
+      },
+      requesterDid,
+    );
+    return ctx.json(response);
   } catch (error) {
     console.error(`Error in feed generation`, JSON.stringify(error));
     return ctx.json({
