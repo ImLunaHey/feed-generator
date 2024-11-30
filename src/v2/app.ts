@@ -36,6 +36,7 @@ const validateAuth = async (req: HonoRequest) => {
   if (!authorization || !authorization.startsWith('Bearer ')) {
     throw new AuthRequiredError();
   }
+  console.info(`validating auth=${authorization}`);
   const jwt = authorization.replace('Bearer ', '').trim();
   const originalUrl = req.url || '/';
   const nsid_ = originalUrl.split('?')[0].replace('/xrpc/', '');
