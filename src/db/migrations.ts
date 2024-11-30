@@ -75,13 +75,3 @@ migrations['003'] = {
     await db.schema.alterTable('post').dropColumn('labels').execute();
   },
 };
-
-migrations['004'] = {
-  async up(db: Kysely<unknown>) {
-    // Create composite index for the main sorting query
-    await db.schema.alterTable('post').addIndex('engagement_sort_idx').columns(['likes', 'replies']).execute();
-  },
-  async down(db: Kysely<unknown>) {
-    await db.schema.alterTable('post').dropIndex('engagement_sort_idx').execute();
-  },
-};
