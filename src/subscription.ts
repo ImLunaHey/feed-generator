@@ -29,9 +29,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         hasImage: create.record.embed?.$type === 'app.bsky.embed.images' ? 1 : 0,
         hasAlt: (
           create.record.embed?.images as {
-            alt: string;
+            alt?: string;
           }[]
-        )?.some((img) => img.alt.trim().length > 0)
+        )?.some((img) => img.alt && img.alt?.trim().length > 0)
           ? 1
           : 0,
         indexedAt: new Date().toISOString(),
