@@ -43,7 +43,6 @@ const scorePost = (post: {
 
   // Penalize posts with banned words
   if (bannedWords.some((word) => post.text?.toLowerCase().includes(word))) {
-    console.info(`[bob] post ${post.uri} contains banned words`);
     return {
       ...post,
       score: 0,
@@ -52,18 +51,14 @@ const scorePost = (post: {
 
   // Penalize posts with images but no alt text
   if (post.hasImage && !post.hasAlt) {
-    console.info(`[bob] post ${post.uri} has image but no alt text`);
     return {
       ...post,
       score: 0,
     };
-  } else if (post.hasImage && post.hasAlt) {
-    console.info(`[bob] post ${post.uri} has image and alt text`);
   }
 
   // Penalize posts with no text
   if (!post.text) {
-    console.info(`[bob] post ${post.uri} has no text`);
     return {
       ...post,
       score: 0,
@@ -72,7 +67,6 @@ const scorePost = (post: {
 
   // Penalize posts with nsfw labels
   if (post.labels?.includes('nsfw') || post.labels?.includes('porn')) {
-    console.info(`[bob] post ${post.uri} has nsfw labels`);
     return {
       ...post,
       score: 0,
