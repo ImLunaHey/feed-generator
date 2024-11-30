@@ -138,11 +138,11 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
   // Get the page of posts
   const processed = scoredPosts.slice(startIndex, startIndex + limit);
 
-  console.info(`[bob] serving ${processed.length} posts`);
-
   const feed = processed.map((post) => ({
     post: post.uri,
   }));
+
+  console.info(`[bob] serving ${feed.length} posts`, feed);
 
   // Create cursor based on score instead of timestamp
   const cursor =
