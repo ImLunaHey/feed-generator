@@ -57,10 +57,11 @@ jetstream.onCreate('app.bsky.feed.repost', async (event) => {
 });
 
 // once every 10 mins clear out old events
-setInterval(() => {
+setInterval(async () => {
   // delete all posts older than 1 hour
   const cutoff = new Date(Date.now() - 60 * 60 * 1000);
-  db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
+  const results = await db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
+  console.log(`Deleted ${results.length} posts`);
 }, 10 * 60 * 1000);
 
 // once every minute log the db stats
