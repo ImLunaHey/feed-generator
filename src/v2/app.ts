@@ -37,10 +37,9 @@ const validateAuth = async (req: HonoRequest) => {
     throw new AuthRequiredError();
   }
   const jwt = authorization.replace('Bearer ', '').trim();
-  const originalUrl = req.url || '/';
-  const nsid_ = originalUrl.split('?')[0].replace('/xrpc/', '');
+  const originalUrl = new URL(req.url).pathname;
+  const nsid_ = originalUrl.replace('/xrpc/', '');
   const nsid = nsid_.endsWith('/') ? nsid_.slice(0, -1) : nsid_; // trim trailing slash
-  console.info(`validating auth=${authorization} nsid=${nsid}`);
   const parsed = await verifyJwt(jwt, config.serviceDid, nsid, async (did: string) => {
     return didResolver.resolveAtprotoKey(did);
   });
