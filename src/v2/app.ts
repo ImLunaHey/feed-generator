@@ -89,7 +89,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
       },
       requesterDid,
     );
-    console.info(`generated feed=${feed} response=${JSON.stringify(response)}`);
+    console.info(`generated algo=${feedUri.rkey} response=${JSON.stringify(response)}`);
     return ctx.json(response);
   } catch (error) {
     console.error(`Error in feed generation`, JSON.stringify(error));
