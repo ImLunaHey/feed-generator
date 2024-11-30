@@ -7,28 +7,42 @@ export const shortname = 'lang-en';
 export const requiresAuth = false;
 
 const cache = new Set<{
-  post: string;
+  author: string;
+  uri: string;
+  cid: string;
+  indexedAt: string;
+  text: string;
+  langs: string;
+  likes: number;
+  replies: number;
+  labels: string;
+  hasImage: number;
+  hasAlt: number;
 }>();
 
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
-  const feed = [...cache.values()];
+  const posts = [...cache.values()];
   const limit = Math.min(params.limit, 30);
 
-  const cursor = params.cursor ? Number(params.cursor) : 0;
-  if (cursor >= feed.length) {
-    return {
-      cursor: '-1',
-      feed: [],
-    };
+  // get the cursor
+  let cursor = params.cursor;
+  let cursorIndex = -1;
+  if (cursor) {
+    cursorIndex = posts.findIndex((p) => p.cid === cursor);
+    if (cursorIndex === -1) {
+      cursor = undefined;
+    }
   }
 
-  if (cursor > 0) {
-    feed.splice(0, cursor);
-  }
+  // get the next batch
+  const feed = cursor ? posts.slice(cursorIndex + 1, cursorIndex + 1 + limit) : posts.slice(0, limit);
 
+  // return the feed
   return {
-    cursor: String(cursor),
-    feed: feed.slice(0, limit),
+    feed: feed.map((p) => ({
+      post: p.uri,
+    })),
+    cursor: feed[feed.length - 1]?.cid,
   };
 };
 
@@ -50,8 +64,6 @@ export const generator = async (ctx: GeneratorContext) => {
 
   // add the new posts to the cache
   for (const row of res) {
-    cache.add({
-      post: row.uri,
-    });
+    cache.add(row);
   }
 };
