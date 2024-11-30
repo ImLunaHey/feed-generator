@@ -8,7 +8,7 @@ import { DidResolver, MemoryCache } from '@atproto/identity';
 import { Database } from '../db/index.js';
 import { config } from './config.js';
 import { db } from './db.js';
-import { jetstream } from './firehose.mjs';
+// import { jetstream } from './firehose.mjs';
 
 const app = new Hono<{
   Variables: {
@@ -56,6 +56,8 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     const feed = ctx.req.query('feed');
     if (!feed) throw new InvalidRequestError('Missing feed parameter', 'MissingFeed');
 
+    console.info(`generating feed=${feed} query=${JSON.stringify(ctx.req.query())}`);
+
     // Parse the feed URI
     const feedUri = new AtUri(feed);
 
@@ -68,7 +70,6 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
 
     // Generate the feed
-    console.info(`feed=${feedUri.rkey} requesterDid=${requesterDid ?? 'unknown'} query=${JSON.stringify(ctx.req.query())}`);
     const response = await algo(
       {
         db: ctx.get('db'),
@@ -88,6 +89,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
       },
       requesterDid,
     );
+    console.info(`generated feed=${feed} response=${JSON.stringify(response)}`);
     return ctx.json(response);
   } catch (error) {
     console.error(`Error in feed generation`, JSON.stringify(error));
@@ -120,5 +122,5 @@ serve(app, (info) => {
   console.log(`🤖 running feed generator at http://${info.address}:${info.port}`);
 
   // start the firehose
-  jetstream.start();
+  // jetstream.start();
 });
