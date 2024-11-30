@@ -12,8 +12,9 @@ const cache = new Set<{
 
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
   const feed = [...cache.values()];
+  const limit = Math.min(params.limit, 30);
 
-  const cursor = Number(params.cursor);
+  const cursor = params.cursor ? Number(params.cursor) : 0;
   if (cursor >= feed.length) {
     return {
       cursor: '-1',
@@ -27,7 +28,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
 
   return {
     cursor: String(cursor),
-    feed,
+    feed: feed.slice(0, limit),
   };
 };
 
