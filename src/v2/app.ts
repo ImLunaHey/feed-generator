@@ -5,7 +5,7 @@ import { AtUri } from '@atproto/syntax';
 import { AuthRequiredError, InvalidRequestError, verifyJwt } from '@atproto/xrpc-server';
 import algos from '../algos';
 import { DidResolver, MemoryCache } from '@atproto/identity';
-import { Database } from '../db';
+import { Database, migrateToLatest } from '../db';
 import { config } from './config';
 import { db } from './db';
 import { jetstream } from './firehose';
@@ -116,10 +116,19 @@ app.get('/.well-known/did.json', (ctx) => {
   });
 });
 
-// Start the feed generator
-serve(app, (info) => {
-  console.log(`🤖 running feed generator at http://${info.address}:${info.port}`);
+const main = async () => {
+  await migrateToLatest(db);
+
+  // Start the feed generator
+  serve(app, (info) => {
+    console.log(`🤖 running feed generator at http://${info.address}:${info.port}`);
+  });
 
   // start the firehose
   jetstream.start();
+};
+
+main().catch((error) => {
+  console.error('Error starting feed generator', error);
+  process.exit(1);
 });
