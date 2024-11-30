@@ -51,7 +51,7 @@ export const generator = async (ctx: GeneratorContext) => {
   // add the new posts to the cache
   for (const row of res) {
     cache.add({
-      post: row.cid,
+      post: row.uri,
     });
   }
 };
