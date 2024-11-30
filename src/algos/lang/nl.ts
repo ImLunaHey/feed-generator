@@ -1,38 +1,69 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton';
-import { AppContext } from '../../config';
+import { AppContext, GeneratorContext } from '../../config';
 
 // max 15 chars
 export const shortname = 'lang-nl';
 
 export const requiresAuth = false;
 
+const cache = new Set<{
+  author: string;
+  uri: string;
+  cid: string;
+  indexedAt: string;
+  text: string;
+  langs: string;
+  likes: number;
+  replies: number;
+  labels: string;
+  hasImage: number;
+  hasAlt: number;
+}>();
+
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
-  let builder = ctx.db
+  const posts = [...cache.values()];
+  const limit = Math.min(params.limit, 30);
+
+  // get the cursor
+  let cursor = params.cursor;
+  let cursorIndex = -1;
+  if (cursor) {
+    cursorIndex = posts.findIndex((p) => p.cid === cursor);
+    if (cursorIndex === -1) {
+      cursor = undefined;
+    }
+  }
+
+  // get the next batch
+  const feed = cursor ? posts.slice(cursorIndex + 1, cursorIndex + 1 + limit) : posts.slice(0, limit);
+
+  // return the feed
+  return {
+    feed: feed.map((p) => ({
+      post: p.uri,
+    })),
+    cursor: feed[feed.length - 1]?.cid,
+  };
+};
+
+/**
+ * Generator function for the feed skeleton
+ */
+export const generator = async (ctx: GeneratorContext) => {
+  const res = await ctx.db
     .selectFrom('post')
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
     .where('langs', 'like', 'nl')
-    .limit(params.limit);
+    .limit(10_000)
+    .execute();
 
-  if (params.cursor) {
-    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString();
-    builder = builder.where('post.indexedAt', '<', timeStr);
+  // empty the cache
+  cache.clear();
+
+  // add the new posts to the cache
+  for (const row of res) {
+    cache.add(row);
   }
-  const res = await builder.execute();
-
-  const feed = res.map((row) => ({
-    post: row.uri,
-  }));
-
-  let cursor: string | undefined;
-  const last = res.at(-1);
-  if (last) {
-    cursor = new Date(last.indexedAt).getTime().toString(10);
-  }
-
-  return {
-    cursor,
-    feed,
-  };
 };
