@@ -62,3 +62,14 @@ setInterval(() => {
   const cutoff = new Date(Date.now() - 60 * 60 * 1000);
   db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
 }, 10 * 60 * 1000);
+
+// once every minute log the db stats
+setInterval(async () => {
+  const postCount = await db
+    .selectFrom('post')
+    .select(db.fn.countAll().as('count'))
+    .executeTakeFirstOrThrow()
+    .then((row) => row.count);
+
+  console.log(`Post count: ${postCount}`);
+}, 60 * 1000);
