@@ -11,7 +11,7 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
     .insertInto('post')
     .values({
       author: event.did,
-      uri: `at://${event.did}/app.bsky.feed.post/${event.commit.cid}`,
+      uri: `at://${event.did}/app.bsky.feed.post/${event.commit.rkey}`,
       cid: event.commit.cid,
       text: event.commit.record.text,
       langs: event.commit.record.langs?.join(',') ?? '',
