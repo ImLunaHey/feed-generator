@@ -142,7 +142,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     post: post.uri,
   }));
 
-  console.info(`[bob] serving ${feed.length} posts`, feed);
+  console.info(`[bob] serving ${feed.length} posts`, JSON.stringify(feed));
 
   // Create cursor based on score instead of timestamp
   const cursor =
