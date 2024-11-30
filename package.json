@@ -8,8 +8,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "publishFeed": "ts-node scripts/publishFeedGen.ts",
-    "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts",
+    "publishFeed": "npx tsx scripts/publishFeedGen.ts",
+    "unpublishFeed": "npx tsx scripts/unpublishFeedGen.ts",
     "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/v2/app.ts"
   },
   "dependencies": {

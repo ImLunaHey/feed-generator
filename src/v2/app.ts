@@ -119,10 +119,47 @@ app.get('/.well-known/did.json', (ctx) => {
 const main = async () => {
   await migrateToLatest(db);
 
-  // Start the feed generator
+  // Start the web server
   serve(app, (info) => {
     console.log(`🤖 running feed generator at http://${info.address}:${info.port}`);
   });
+
+  // start the feed generators
+  for (const [algoName, algo] of Object.entries(algos)) {
+    // first run
+    await algo
+      .generator?.({
+        db,
+        config: {
+          ...config,
+          port: Number(config.port),
+          listenhost: config.hostname,
+          subscriptionEndpoint: 'wss://bsky.network',
+          subscriptionReconnectDelay: 3000,
+        },
+      })
+      .catch((error) => {
+        console.error(`Error running generator for algo=${algoName}`, error);
+      });
+
+    // then run every 10 minutes
+    setInterval(async () => {
+      await algo
+        .generator?.({
+          db,
+          config: {
+            ...config,
+            port: Number(config.port),
+            listenhost: config.hostname,
+            subscriptionEndpoint: 'wss://bsky.network',
+            subscriptionReconnectDelay: 3000,
+          },
+        })
+        .catch((error) => {
+          console.error(`Error running generator for algo=${algoName}`, error);
+        });
+    }, 60 * 10 * 1_000);
+  }
 
   // start the firehose
   jetstream.start();

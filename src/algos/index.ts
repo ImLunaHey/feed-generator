@@ -1,4 +1,4 @@
-import { AppContext } from '../config';
+import { AppContext, GeneratorContext } from '../config';
 import { QueryParams, OutputSchema as AlgoOutput } from '../lexicon/types/app/bsky/feed/getFeedSkeleton';
 import * as bob from './bob';
 import * as cats from './cats';
@@ -16,6 +16,7 @@ const algos: Record<
   {
     handler: AlgoHandler;
     requiresAuth?: boolean;
+    generator?: (ctx: GeneratorContext) => Promise<void>;
   }
 > = {
   [bob.shortname]: bob,

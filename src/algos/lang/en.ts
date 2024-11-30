@@ -1,38 +1,56 @@
 import { QueryParams } from '../../lexicon/types/app/bsky/feed/getFeedSkeleton';
-import { AppContext } from '../../config';
+import { AppContext, GeneratorContext } from '../../config';
 
 // max 15 chars
 export const shortname = 'lang-en';
 
 export const requiresAuth = false;
 
+const cache = new Set<{
+  post: string;
+}>();
+
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {
-  let builder = ctx.db
+  const feed = [...cache.values()];
+
+  const cursor = Number(params.cursor);
+  if (cursor >= feed.length) {
+    return {
+      cursor: '-1',
+      feed: [],
+    };
+  }
+
+  if (cursor > 0) {
+    feed.splice(0, cursor);
+  }
+
+  return {
+    cursor: String(cursor),
+    feed,
+  };
+};
+
+/**
+ * Generator function for the feed skeleton
+ */
+export const generator = async (ctx: GeneratorContext) => {
+  const res = await ctx.db
     .selectFrom('post')
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
     .where('langs', 'like', 'en')
-    .limit(params.limit);
+    .limit(10_000)
+    .execute();
 
-  if (params.cursor) {
-    const timeStr = new Date(parseInt(params.cursor, 10)).toISOString();
-    builder = builder.where('post.indexedAt', '<', timeStr);
+  // empty the cache
+  cache.clear();
+
+  // add the new posts to the cache
+  for (const row of res) {
+    cache.add({
+      post: row.cid,
+    });
   }
-  const res = await builder.execute();
-
-  const feed = res.map((row) => ({
-    post: row.uri,
-  }));
-
-  let cursor: string | undefined;
-  const last = res.at(-1);
-  if (last) {
-    cursor = new Date(last.indexedAt).getTime().toString(10);
-  }
-
-  return {
-    cursor,
-    feed,
-  };
 };
