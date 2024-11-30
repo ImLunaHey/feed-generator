@@ -68,29 +68,26 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
 
     // Generate the feed
-    console.info(`generating algo=${algo} query=${JSON.stringify(ctx.req.query())}`);
-    // const response = await algo(
-    //   {
-    //     db: ctx.get('db'),
-    //     didResolver: ctx.get('didResolver'),
-    //     cfg: {
-    //       ...ctx.get('config'),
-    //       port: Number(ctx.get('config').port),
-    //       listenhost: ctx.get('config').hostname,
-    //       subscriptionEndpoint: 'wss://bsky.network',
-    //       subscriptionReconnectDelay: 3000,
-    //     },
-    //   },
-    //   {
-    //     feed,
-    //     limit: Number(ctx.req.query('limit')) || 50,
-    //     cursor: ctx.req.query('cursor'),
-    //   },
-    //   requesterDid,
-    // );
-    const response = {
-      feed: [],
-    };
+    console.info(`generating algo=${feedUri.rkey} query=${JSON.stringify(ctx.req.query())}`);
+    const response = await algo(
+      {
+        db: ctx.get('db'),
+        didResolver: ctx.get('didResolver'),
+        cfg: {
+          ...ctx.get('config'),
+          port: Number(ctx.get('config').port),
+          listenhost: ctx.get('config').hostname,
+          subscriptionEndpoint: 'wss://bsky.network',
+          subscriptionReconnectDelay: 3000,
+        },
+      },
+      {
+        feed,
+        limit: Number(ctx.req.query('limit')) || 50,
+        cursor: ctx.req.query('cursor'),
+      },
+      requesterDid,
+    );
     console.info(`generated algo=${feedUri.rkey} response=${JSON.stringify(response)}`);
     return ctx.json(response);
   } catch (error) {
