@@ -9,7 +9,7 @@
   "scripts": {
     "publishFeed": "ts-node scripts/publishFeedGen.ts",
     "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts",
-    "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/v2/firehose.mts"
+    "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/v2/app.mts"
   },
   "dependencies": {
     "@atproto/api": "^0.6.20",
