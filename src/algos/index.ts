@@ -3,6 +3,7 @@ import { QueryParams, OutputSchema as AlgoOutput } from '../lexicon/types/app/bs
 import * as bob from './bob';
 import * as cats from './cats';
 import * as english from './lang/en';
+import * as french from './lang/fr';
 import * as dutch from './lang/nl';
 import * as luna from './luna';
 import * as viewers from './viewers';
@@ -20,6 +21,7 @@ const algos: Record<
   [bob.shortname]: bob,
   [cats.shortname]: cats,
   [english.shortname]: english,
+  [french.shortname]: french,
   [dutch.shortname]: dutch,
   [luna.shortname]: luna,
   [viewers.shortname]: viewers,
