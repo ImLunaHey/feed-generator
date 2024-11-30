@@ -58,6 +58,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
 
     // Parse the feed URI
     const feedUri = new AtUri(feed);
+    console.info(`generating algo=${feedUri.rkey} query=${JSON.stringify(ctx.req.query())}`);
 
     // Check if the feed algorithm is supported
     const algo = algos[feedUri.rkey].handler;
@@ -68,7 +69,6 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
 
     // Generate the feed
-    console.info(`generating algo=${feedUri.rkey} query=${JSON.stringify(ctx.req.query())}`);
     const response = await algo(
       {
         db: ctx.get('db'),
@@ -91,7 +91,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     console.info(`generated algo=${feedUri.rkey} response=${JSON.stringify(response)}`);
     return ctx.json(response);
   } catch (error) {
-    console.error(`Error in feed generation`, JSON.stringify(error));
+    console.error(`Error in feed generation`, String(error));
     return ctx.json({
       feed: [],
     });
