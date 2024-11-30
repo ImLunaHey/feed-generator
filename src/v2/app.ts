@@ -8,7 +8,7 @@ import { DidResolver, MemoryCache } from '@atproto/identity';
 import { Database } from '../db';
 import { config } from './config';
 import { db } from './db';
-// import { jetstream } from './firehose.mjs';
+import { jetstream } from './firehose';
 
 const app = new Hono<{
   Variables: {
@@ -122,5 +122,5 @@ serve(app, (info) => {
   console.log(`🤖 running feed generator at http://${info.address}:${info.port}`);
 
   // start the firehose
-  // jetstream.start();
+  jetstream.start();
 });
