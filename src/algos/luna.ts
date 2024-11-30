@@ -15,6 +15,14 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
         {
           post: 'at://did:plc:k6acu4chiwkixvdedcmdgmal/app.bsky.feed.post/3lc3kim3d4c2z',
         },
+        {
+          // test post please ignore
+          post: 'at://did:plc:k6acu4chiwkixvdedcmdgmal/app.bsky.feed.post/3lc364tfdhk2l',
+        },
+        {
+          // netherlands test post
+          post: 'at://did:plc:j7d55pifcqneuox644o7adp6/app.bsky.feed.post/3lc5ni2yvkk27',
+        },
       ],
     };
   }
