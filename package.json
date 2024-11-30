@@ -6,10 +6,11 @@
   "repository": "git@github.com:bluesky-social/feed-generator.git",
   "author": "dholms <dtholmgren@gmail.com>",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "publishFeed": "ts-node scripts/publishFeedGen.ts",
     "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts",
-    "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/v2/app.mts"
+    "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/v2/app.ts"
   },
   "dependencies": {
     "@atproto/api": "^0.6.20",

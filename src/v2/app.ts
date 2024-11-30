@@ -3,11 +3,11 @@ import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { AtUri } from '@atproto/syntax';
 import { AuthRequiredError, InvalidRequestError, verifyJwt } from '@atproto/xrpc-server';
-import algos from '../algos/index.js';
+import algos from '../algos';
 import { DidResolver, MemoryCache } from '@atproto/identity';
-import { Database } from '../db/index.js';
-import { config } from './config.js';
-import { db } from './db.js';
+import { Database } from '../db';
+import { config } from './config';
+import { db } from './db';
 // import { jetstream } from './firehose.mjs';
 
 const app = new Hono<{
