@@ -55,3 +55,10 @@ jetstream.onCreate('app.bsky.feed.repost', async (event) => {
     .where('uri', '=', event.commit.record.subject.uri)
     .execute();
 });
+
+// once every 10 mins clear out old events
+setInterval(() => {
+  // delete all posts older than 1 hour
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000);
+  db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
+}, 10 * 60 * 1000);
