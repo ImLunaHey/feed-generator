@@ -3,17 +3,12 @@ import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { AtUri } from '@atproto/syntax';
 import { AuthRequiredError, InvalidRequestError, verifyJwt } from '@atproto/xrpc-server';
-import algos from '../algos';
+import algos from '../algos/index.js';
 import { DidResolver, MemoryCache } from '@atproto/identity';
-import { createDb, Database } from '../db';
-
-const config = {
-  hostname: process.env.FEEDGEN_HOSTNAME || 'example.com',
-  serviceDid: process.env.FEEDGEN_SERVICE_DID || `did:web:${process.env.FEEDGEN_HOSTNAME}`,
-  port: process.env.FEEDGEN_PORT || 3000,
-  sqliteLocation: process.env.FEEDGEN_SQLITE_LOCATION || ':memory:',
-  publisherDid: process.env.FEEDGEN_PUBLISHER_DID || 'did:example:alice',
-};
+import { Database } from '../db/index.js';
+import { config } from './config.js';
+import { db } from './db.js';
+import { jetstream } from './firehose.mjs';
 
 const app = new Hono<{
   Variables: {
@@ -22,8 +17,6 @@ const app = new Hono<{
     config: typeof config;
   };
 }>();
-
-const db = createDb(config.sqliteLocation);
 
 app.use('/*', async (ctx, next) => {
   ctx.set('db', db);
@@ -122,7 +115,10 @@ app.get('/.well-known/did.json', (ctx) => {
   });
 });
 
-// Start the server
+// Start the feed generator
 serve(app, (info) => {
   console.log(`🤖 running feed generator at http://${info.address}:${info.port}`);
+
+  // start the firehose
+  jetstream.start();
 });
