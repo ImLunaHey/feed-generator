@@ -55,10 +55,10 @@ export const generator = async (ctx: GeneratorContext) => {
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
-    .where('langs', 'not like', 'en')
-    .where('langs', 'not like', 'fr')
-    .where('langs', 'not like', 'nl')
-    .where('langs', 'not like', 'pt')
+    .where('langs', 'not like', '%en%')
+    .where('langs', 'not like', '%fr%')
+    .where('langs', 'not like', '%nl%')
+    .where('langs', 'not like', '%pt%')
     .limit(10_000)
     .execute();
 
