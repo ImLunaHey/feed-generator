@@ -390,6 +390,65 @@ app.get('/stats/links', async (ctx) => {
   );
 });
 
+app.get('/stats/pinned/json', async (ctx) => {
+  const pinnedStats = await db
+    .selectFrom('post')
+    .select('rootPostUri')
+    .select('cid')
+    .where('rootPostUri', '!=', '')
+    .where('text', 'like', '%📌%')
+    .execute();
+
+  const stats = pinnedStats.reduce((acc, stat) => {
+    if (!acc[stat.rootPostUri]) {
+      acc[stat.rootPostUri] = 0;
+    }
+    acc[stat.rootPostUri] += 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return ctx.json(stats);
+});
+
+app.get('/stats/pinned', async (ctx) => {
+  const pinnedStats = await db
+    .selectFrom('post')
+    .select('rootPostUri')
+    .select('cid')
+    .where('rootPostUri', '!=', '')
+    .where('text', 'like', '%📌%')
+    .execute();
+
+  const stats = pinnedStats.reduce((acc, stat) => {
+    if (!acc[stat.rootPostUri]) {
+      acc[stat.rootPostUri] = 0;
+    }
+    acc[stat.rootPostUri] += 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // sort by post count
+  const sorted = Object.entries(stats).sort(([, a], [, b]) => b - a);
+
+  return ctx.html(
+    createAppWrapper(`
+    <a href="/stats">< go back</a>
+    <h1>Pinned Post Stats</h1>
+    <p>See raw data at <a href="/stats/pinned/json">/stats/pinned/json</a></p>
+
+    <h2>Posts with more than 1 pin</h2>
+    <ol>
+      ${sorted
+        .map(
+          ([post, count]) =>
+            `<li><a href="https://bsky.app/post/${post.split('at://')[1]}">${post.split('at://')[1]}</a> (${count})</li>`,
+        )
+        .join('')}
+    </ol>
+  `),
+  );
+});
+
 // Feed Skeleton endpoint
 app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
   try {
