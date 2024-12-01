@@ -5,6 +5,7 @@ import * as cats from './cats';
 import * as english from './lang/en';
 import * as french from './lang/fr';
 import * as dutch from './lang/nl';
+import * as portuguese from './lang/pt';
 import * as luna from './luna';
 import * as viewers from './viewers';
 import * as noAlt from './no-alt';
@@ -26,6 +27,7 @@ const algos: Record<
   [english.shortname]: english,
   [french.shortname]: french,
   [dutch.shortname]: dutch,
+  [portuguese.shortname]: portuguese,
   [luna.shortname]: luna,
   [viewers.shortname]: viewers,
   [noAlt.shortname]: noAlt,
