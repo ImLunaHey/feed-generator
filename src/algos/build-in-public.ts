@@ -2,7 +2,7 @@ import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton';
 import { AppContext, GeneratorContext } from '../config';
 
 // max 15 chars
-export const shortname = 'build-in-public';
+export const shortname = 'buildinpublic';
 
 export const requiresAuth = false;
 
