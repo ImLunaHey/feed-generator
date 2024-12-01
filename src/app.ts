@@ -430,6 +430,10 @@ app.get('/stats/pinned', async (ctx) => {
   // sort by post count
   const sorted = Object.entries(stats).sort(([, a], [, b]) => b - a);
 
+  const handles = await Promise.allSettled(
+    sorted.map(async ([postUri]) => didResolver.resolve(postUri.split('//')[1].split('/')[0])),
+  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+
   return ctx.html(
     createAppWrapper(`
     <a href="/stats">< go back</a>
@@ -439,10 +443,10 @@ app.get('/stats/pinned', async (ctx) => {
     <h2>Posts with more than 1 pin</h2>
     <ol>
       ${sorted
-        .map(
-          ([post, count]) =>
-            `<li><a href="https://bsky.app/post/${post.split('at://')[1]}">${post.split('at://')[1]}</a> (${count})</li>`,
-        )
+        .map(([postUri, count], index) => {
+          const rKey = postUri.split('at://')[1].split('/')[4];
+          return `<li><a href="https://bsky.app/profile/${handles[index]}/post/${rKey}">@${handles[index]}/${rKey}</a> (${count})</li>`;
+        })
         .join('')}
     </ol>
   `),
