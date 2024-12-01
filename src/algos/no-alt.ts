@@ -11,7 +11,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .selectFrom('post')
     .selectAll()
     .where('post.hasImage', '=', 1)
-    .where('post.hasAlt', '=', 0)
+    .where('post.altText', '=', '')
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
     .limit(limit);

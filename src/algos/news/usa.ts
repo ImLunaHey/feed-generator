@@ -17,7 +17,7 @@ const cache = new Set<{
   replies: number;
   labels: string;
   hasImage: number;
-  hasAlt: number;
+  altText: string;
 }>();
 
 export const handler = async (ctx: AppContext, params: QueryParams, requesterDid?: string) => {

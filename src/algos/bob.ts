@@ -14,7 +14,7 @@ const scorePost = (post: {
   text: string;
   labels: string;
   hasImage: number;
-  hasAlt: number;
+  altText: string;
   replyCount: number;
   likeCount: number;
 }) => {
@@ -50,7 +50,7 @@ const scorePost = (post: {
   }
 
   // Penalize posts with images but no alt text
-  if (post.hasImage && !post.hasAlt) {
+  if (post.hasImage && !post.altText.trim()) {
     return {
       ...post,
       score: 0,
@@ -113,7 +113,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
       'post.likes as likeCount',
       'post.labels',
       'post.hasImage',
-      'post.hasAlt',
+      'post.altText',
     ])
     .orderBy('post.likes', 'desc')
     .orderBy('post.replies', 'desc')
