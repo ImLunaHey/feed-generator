@@ -444,8 +444,9 @@ app.get('/stats/pinned', async (ctx) => {
     <ol>
       ${sorted
         .map(([postUri, count], index) => {
-          const rKey = postUri.split('at://')[1].split('/')[4];
-          return `<li><a href="https://bsky.app/profile/${handles[index]}/post/${rKey}">@${handles[index]}/${rKey}</a> (${count})</li>`;
+          const rKey = postUri.split('at://')[1].split('/')[3];
+          const handle = handles[index]?.alsoKnownAs?.[0].split('//')[1] ?? postUri.split('//')[1].split('/')[0];
+          return `<li><a href="https://bsky.app/profile/${handle}/post/${rKey}">@${handle}/${rKey}</a> (${count})</li>`;
         })
         .join('')}
     </ol>
