@@ -119,8 +119,8 @@ app.get('/stats/accounts', async (ctx) => {
       ${sorted
         .map(
           ([did, { likeCount, replyCount }], index) =>
-            `<li><a href="https://bsky.app/profile/${handles[index]?.alsoKnownAs?.[0] ?? did}">${
-              handles[index]?.alsoKnownAs?.[0] ?? did
+            `<li><a href="https://bsky.app/profile/${handles[index]?.alsoKnownAs?.[0].split('//')[1] ?? did}">@${
+              handles[index]?.alsoKnownAs?.[0].split('//')[1] ?? did
             }</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
         )
         .join('')}
