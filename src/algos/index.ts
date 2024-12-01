@@ -11,6 +11,7 @@ import * as viewers from './viewers';
 import * as noAlt from './no-alt';
 import * as youtubeVideos from './youtube-videos';
 import * as newsUsa from './news/usa';
+import * as swifities from './swifties';
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams, requesterDid?: string) => Promise<AlgoOutput>;
 
@@ -33,6 +34,7 @@ const algos: Record<
   [noAlt.shortname]: noAlt,
   [youtubeVideos.shortname]: youtubeVideos,
   [newsUsa.shortname]: newsUsa,
+  [swifities.shortname]: swifities,
 };
 
 export default algos;
