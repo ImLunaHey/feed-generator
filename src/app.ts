@@ -55,6 +55,7 @@ app.get('/stats', async (ctx) => {
       <li><a href="/stats/feeds">Feeds</a></li>
       <li><a href="/stats/tags">Tags</a></li>
       <li><a href="/stats/accounts">Accounts</a></li>
+      <li><a href="/stats/domains">Domains</a></li>
     </ul>
   `);
 });
@@ -243,13 +244,13 @@ app.get('/stats/tags', async (ctx) => {
     </ul>
 
     <h2>Tags with more than 1 post</h2>
-    <ul>
+    <ol>
       ${sorted
         .map(
           ([tag, count]) => `<li><a href="https://bsky.app/hashtag/${encodeURIComponent(tag)}">${tag}</a> (${count})</li>`,
         )
         .join('')}
-    </ul>
+    </ol>
     `);
 });
 
@@ -298,9 +299,9 @@ app.get('/stats/domains', async (ctx) => {
     <p>See raw data at <a href="/stats/domains/json">/stats/domains/json</a></p>
 
     <h2>Domains with more than 1 post</h2>
-    <ul>
+    <ol>
       ${sorted.map(([domain, count]) => `<li><a href="http://${domain}">${domain}</a> (${count})</li>`).join('')}
-    </ul>
+    </ol>
   `);
 });
 
