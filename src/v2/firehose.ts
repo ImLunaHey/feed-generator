@@ -1,5 +1,6 @@
 import { Jetstream } from '@skyware/jetstream';
 import { db } from './db';
+import { Tag } from '../lexicon/types/app/bsky/richtext/facet';
 
 export const jetstream = new Jetstream({
   wantedCollections: ['app.bsky.feed.post', 'app.bsky.feed.like', 'app.bsky.feed.repost'], // omit to receive all collections
@@ -27,7 +28,15 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
           ? 1
           : 0,
       embedUrl: event.commit.record.embed?.$type === 'app.bsky.embed.external' ? event.commit.record.embed.external.uri : '',
-      tags: event.commit.record.tags?.join(',') ?? '',
+      // tags: event.commit.record.tags?.join(',') ?? '',
+      tags:
+        event.commit.record.facets
+          ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#tag')
+          .map((facet) => {
+            const tag = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
+            return tag;
+          })
+          .join(',') ?? '',
       indexedAt: new Date().toISOString(),
     })
     .onConflict((oc) => oc.doNothing())
