@@ -118,7 +118,7 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
       })
       .catch((error) => {
         {
-          console.error(`Error updating feed stats`, error);
+          console.error(`Error updating feed stats`, String(error));
         }
       });
     return ctx.json(response);
