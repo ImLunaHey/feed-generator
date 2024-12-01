@@ -62,10 +62,11 @@ app.get('/stats', async (ctx) => {
 app.get('/stats/feeds/json', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
-    if (!acc[stat.feed]) {
-      acc[stat.feed] = 0;
+    const feed = stat.feed.toLowerCase();
+    if (!acc[feed]) {
+      acc[feed] = 0;
     }
-    acc[stat.feed] += stat.fetches;
+    acc[feed] += stat.fetches;
     return acc;
   }, {} as Record<string, number>);
   // sort the fields alphabetically so that sub feeds are grouped together
@@ -76,10 +77,11 @@ app.get('/stats/feeds/json', async (ctx) => {
 app.get('/stats/feeds', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
-    if (!acc[stat.feed]) {
-      acc[stat.feed] = 0;
+    const feed = stat.feed.toLowerCase();
+    if (!acc[feed]) {
+      acc[feed] = 0;
     }
-    acc[stat.feed] += stat.fetches;
+    acc[feed] += stat.fetches;
     return acc;
   }, {} as Record<string, number>);
   // sort the fields alphabetically so that sub feeds are grouped together
