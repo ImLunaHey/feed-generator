@@ -128,14 +128,17 @@ app.get('/stats/tags', async (ctx) => {
   }, {} as Record<string, number>);
 
   // sort by tag count
-  const sorted = Object.fromEntries(Object.entries(stats).sort(([, a], [, b]) => b - a));
+  const sorted = Object.fromEntries(
+    Object.entries(stats)
+      .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
+      .sort(([, a], [, b]) => b - a),
+  );
 
   return ctx.html(`
     <h1>Tag Stats</h1>
     <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
     <ul>
       ${Object.entries(sorted)
-        .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
         .map(([tag, count]) => `<li><a href="https://bsky.app/hashtag/${tag}">${tag}</a> (${count})</li>`)
         .join('')}
     </ul>
