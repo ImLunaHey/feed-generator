@@ -55,9 +55,8 @@ export const generator = async (ctx: GeneratorContext) => {
     .selectFrom('post')
     .selectAll()
     .orderBy('indexedAt', 'desc')
-    .orderBy('cid', 'desc')
     .where('rootPostUri', '!=', '')
-    .where('text', 'like', '%📌%')
+    .where('text', '=', '📌')
     .limit(10_000)
     .execute();
 
