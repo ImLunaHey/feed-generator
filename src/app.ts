@@ -253,6 +253,53 @@ app.get('/stats/tags', async (ctx) => {
     `);
 });
 
+app.get('/stats/domains/json', async (ctx) => {
+  const postLinks = await db.selectFrom('post').select('links').execute();
+  const domains = postLinks.reduce((acc, stat) => {
+    const links = stat.links.split(',');
+    for (const link of links) {
+      const url = new URL(link.trim().toLowerCase());
+      if (!acc[url.hostname]) {
+        acc[url.hostname] = 0;
+      }
+      acc[url.hostname] += 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // sort by link count
+  const sorted = Object.fromEntries(Object.entries(domains).sort(([, a], [, b]) => b - a));
+  return ctx.json(sorted);
+});
+
+app.get('/stats/domains', async (ctx) => {
+  const postLinks = await db.selectFrom('post').select('links').execute();
+  const domains = postLinks.reduce((acc, stat) => {
+    const links = stat.links.split(',');
+    for (const link of links) {
+      const url = new URL(link.trim().toLowerCase());
+      if (!acc[url.hostname]) {
+        acc[url.hostname] = 0;
+      }
+      acc[url.hostname] += 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // sort by link count
+  const sorted = Object.entries(domains).sort(([, a], [, b]) => b - a);
+
+  return ctx.html(`
+    <h1>Domain Stats</h1>
+    <p>See raw data at <a href="/stats/domains/json">/stats/domains/json</a></p>
+
+    <h2>Domains with more than 1 post</h2>
+    <ul>
+      ${sorted.map(([domain, count]) => `<li><a href="http://${domain}">${domain}</a> (${count})</li>`).join('')}
+    </ul>
+  `);
+});
+
 // Feed Skeleton endpoint
 app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
   try {
