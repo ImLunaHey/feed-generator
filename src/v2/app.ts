@@ -76,6 +76,7 @@ app.get('/stats/accounts/json', async (ctx) => {
     acc[stat.author].replyCount += stat.replyCount;
     return acc;
   }, {} as Record<string, { likeCount: number; replyCount: number }>);
+
   return ctx.json(stats);
 });
 
@@ -105,6 +106,10 @@ app.get('/stats/accounts', async (ctx) => {
     })
     .slice(0, Math.ceil(Object.keys(stats).length * 0.1));
 
+  const handles = await Promise.allSettled(sorted.map(async ([author, data]) => didResolver.resolve(author))).then(
+    (results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)).filter(Boolean),
+  );
+
   return ctx.html(`
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
@@ -113,8 +118,10 @@ app.get('/stats/accounts', async (ctx) => {
     <ul>
       ${sorted
         .map(
-          ([author, { likeCount, replyCount }]) =>
-            `<li><a href="https://bsky.app/profile/${author}">${author}</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
+          ([did, { likeCount, replyCount }], index) =>
+            `<li><a href="https://bsky.app/profile/${handles[index]?.alsoKnownAs?.[0] ?? did}">${
+              handles[index]?.alsoKnownAs?.[0] ?? did
+            }</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
         )
         .join('')}
     </ul>
