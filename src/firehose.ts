@@ -76,8 +76,8 @@ jetstream.onCreate('app.bsky.feed.repost', async (event) => {
 });
 
 setInterval(async () => {
-  // delete all posts older than 1 hour
-  const cutoff = new Date(Date.now() - 60 * 60 * 1000);
+  // delete all posts older than 3 hours
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000 * 3);
   const results = await db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
   console.log(`Deleted ${results[0].numDeletedRows} posts`);
 
