@@ -134,11 +134,9 @@ app.get('/stats/tags', async (ctx) => {
   }, {} as Record<string, number>);
 
   // sort by tag count
-  const sorted = Object.fromEntries(
-    Object.entries(stats)
-      .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
-      .sort(([tagA, countA], [tagB, countB]) => countB - countA || tagA.localeCompare(tagB)),
-  );
+  const sorted = Object.entries(stats)
+    .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
+    .sort(([tagA, countA], [tagB, countB]) => countB - countA);
 
   return ctx.html(`
     <h1>Tag Stats</h1>
@@ -146,7 +144,7 @@ app.get('/stats/tags', async (ctx) => {
 
     <h2>Tags ending in sky</h2>
     <ul>
-      ${Object.entries(sorted)
+      ${sorted
         .filter(([tag]) => tag.toLowerCase().endsWith('sky'))
         .map(
           ([tag, count]) => `<li><a href="https://bsky.app/hashtag/${encodeURIComponent(tag)}">${tag}</a> (${count})</li>`,
@@ -156,7 +154,7 @@ app.get('/stats/tags', async (ctx) => {
 
     <h2>Tags with more than 1 post</h2>
     <ul>
-      ${Object.entries(sorted)
+      ${sorted
         .map(
           ([tag, count]) => `<li><a href="https://bsky.app/hashtag/${encodeURIComponent(tag)}">${tag}</a> (${count})</li>`,
         )
