@@ -55,7 +55,19 @@ export const generator = async (ctx: GeneratorContext) => {
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
-    .where((eb) => eb.or([eb('text', 'like', '%swifties%'), eb('text', 'like', '%taylor swift%')]))
+    .where((eb) =>
+      eb.or([
+        // text content
+        eb('text', 'like', '%swifties%'),
+        eb('text', 'like', '%taylor swift%'),
+        eb('text', 'like', '%erastour%'),
+
+        // hashtags
+        eb('tags', 'like', '%swifties%'),
+        eb('tags', 'like', '%taylor swift%'),
+        eb('tags', 'like', '%erastour%'),
+      ]),
+    )
     .limit(10_000)
     .execute();
 
