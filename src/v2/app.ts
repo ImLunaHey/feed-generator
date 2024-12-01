@@ -109,7 +109,7 @@ app.get('/stats/accounts', async (ctx) => {
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
 
-    <h2>Accounts with more than 1 like or reply</h2>
+    <h2>Accounts with posts within the last hour that have more than 1 like or reply</h2>
     <ul>
       ${sorted
         .map(
