@@ -50,7 +50,13 @@ const validateAuth = async (req: HonoRequest) => {
 app.use('/*', cors());
 
 app.get('/stats', async (ctx) => {
-  const feedStats = await db.selectFrom('feed_stats').where('user', '=', 'guest').selectAll().execute();
+  const feed = ctx.req.query('feed') || 'all';
+  const user = ctx.req.query('user') || 'guest';
+  let builder = db.selectFrom('feed_stats').where('user', '=', user).selectAll();
+  if (feed !== 'all') {
+    builder = builder.where('feed', '=', feed);
+  }
+  const feedStats = await builder.execute();
   return ctx.json(feedStats);
 });
 
@@ -104,18 +110,12 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
           .where('user', '=', requesterDid || 'guest')
           .execute();
 
-        console.info(
-          `Fetched feed stats for algo=${feedUri.rkey} user=${requesterDid || 'guest'} stats=${JSON.stringify(feedStats)}`,
-        );
-
         if (feedStats.length === 0) {
-          console.info(`Inserting feed stats for algo=${feedUri.rkey} user=${requesterDid || 'guest'}`);
           await trx
             .insertInto('feed_stats')
             .values({ feed: feedUri.rkey, fetches: 1, user: requesterDid || 'guest' })
             .execute();
         } else {
-          console.info(`Updating feed stats for algo=${feedUri.rkey} user=${requesterDid || 'guest'}`);
           await trx
             .updateTable('feed_stats')
             .where('feed', '=', feedUri.rkey)
@@ -125,8 +125,6 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
             }))
             .execute();
         }
-
-        console.info(`Updated feed stats for algo=${feedUri.rkey} user=${requesterDid || 'guest'}`);
       })
       .catch((error) => {
         {
