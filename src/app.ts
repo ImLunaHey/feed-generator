@@ -74,6 +74,7 @@ app.get('/stats', async (ctx) => {
       <li><a href="/stats/accounts">Accounts</a></li>
       <li><a href="/stats/domains">Domains</a></li>
       <li><a href="/stats/links">Links</a></li>
+      <li><a href="/stats/pinned">Pinned Posts</a></li>
     </ul>
   `),
   );
