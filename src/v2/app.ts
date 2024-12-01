@@ -137,6 +137,16 @@ app.get('/stats/tags', async (ctx) => {
   return ctx.html(`
     <h1>Tag Stats</h1>
     <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
+
+    <h2>Tags ending in sky</h2>
+    <ul>
+      ${Object.entries(sorted)
+        .filter(([tag]) => tag.toLowerCase().endsWith('sky'))
+        .map(([tag, count]) => `<li><a href="https://bsky.app/hashtag/${tag}">${tag}</a> (${count})</li>`)
+        .join('')}
+    </ul>
+
+    <h2>Tags with more than 1 post</h2>
     <ul>
       ${Object.entries(sorted)
         .map(([tag, count]) => `<li><a href="https://bsky.app/hashtag/${tag}">${tag}</a> (${count})</li>`)
