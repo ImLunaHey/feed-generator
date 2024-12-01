@@ -34,7 +34,7 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
     .execute();
 
   if (event.commit.record.tags) {
-    console.info('post tags:', event.commit.record.tags?.join(','));
+    console.info(`Post ${event.commit.rkey} has tags: ${event.commit.record.tags.join(', ')}`);
   }
 });
 
