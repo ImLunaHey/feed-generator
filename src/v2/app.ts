@@ -50,6 +50,16 @@ const validateAuth = async (req: HonoRequest) => {
 app.use('/*', cors());
 
 app.get('/stats', async (ctx) => {
+  return ctx.html(`
+    <h1>Feed Generator Stats</hjson>
+    <ul>
+      <li><a href="/stats/feeds">Feeds</a></li>
+      <li><a href="/stats/tags">Tags</a></li>
+    </ul>
+  `);
+});
+
+app.get('/stats/feeds', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
     if (!acc[stat.feed]) {
@@ -61,6 +71,22 @@ app.get('/stats', async (ctx) => {
   // sort the fields alphabetically so that sub feeds are grouped together
   const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
   return ctx.json(sorted);
+});
+
+app.get('/stats/tags', async (ctx) => {
+  const feedStats = await db.selectFrom('post').select('tags').execute();
+  const stats = feedStats.reduce((acc, stat) => {
+    const tags = stat.tags.split(',');
+    for (const tag of tags) {
+      if (!acc[tag]) {
+        acc[tag] = 0;
+      }
+      acc[tag] += 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  return ctx.json(stats);
 });
 
 // Feed Skeleton endpoint
