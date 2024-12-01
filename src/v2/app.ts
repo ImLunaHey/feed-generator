@@ -110,27 +110,31 @@ app.get('/stats/accounts', async (ctx) => {
     results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)),
   );
 
+  const mostCommonTld = Object.entries(
+    handles.reduce((acc, handle) => {
+      if (handle?.alsoKnownAs?.[0].endsWith('.bsky.social')) {
+        return acc;
+      }
+      const tld = handle?.alsoKnownAs?.[0].split('.').slice(-1)[0];
+      if (!tld) {
+        return acc;
+      }
+
+      if (!acc[tld]) {
+        acc[tld] = 0;
+      }
+      acc[tld] += 1;
+      return acc;
+    }, {} as Record<string, number>),
+  ).sort(([, a], [, b]) => b - a)[0][0];
+
   return ctx.html(`
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
 
     <p>Out of the top 1k accounts only ${
       handles.filter((handle) => !handle?.alsoKnownAs?.[0].endsWith('.bsky.social')).length
-    } have a custom domain set, the most common tld is ${handles.reduce((acc, handle) => {
-    if (handle?.alsoKnownAs?.[0].endsWith('.bsky.social')) {
-      return acc;
-    }
-    const tld = handle?.alsoKnownAs?.[0].split('.').slice(-1)[0];
-    if (!tld) {
-      return acc;
-    }
-
-    if (!acc[tld]) {
-      acc[tld] = 0;
-    }
-    acc[tld] += 1;
-    return acc;
-  }, {} as Record<string, number>)}</p>
+    } have a custom domain set, the most common tld is ${mostCommonTld}</p>
 
     <h2>Top 1k accounts with posts within the last hour by total likes and replies</h2>
     <ol>
