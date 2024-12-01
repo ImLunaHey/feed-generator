@@ -64,6 +64,10 @@ export type Post = {
    * Comma seperated list of tags
    */
   tags: string;
+  /**
+   * Comma seperated list of links
+   */
+  links: string;
 };
 
 export type FeedStats = {
