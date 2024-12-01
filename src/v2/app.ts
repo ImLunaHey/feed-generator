@@ -130,6 +130,7 @@ app.get('/stats/tags', async (ctx) => {
     <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
     <ul>
       ${Object.entries(stats)
+        .filter(([tag, count]) => count > 1 || tag === '[object Object]' || tag === '')
         .map(([tag, count]) => `<li><a href="https://bsky.app/hashtag/${tag}">${tag}</a> (${count})</li>`)
         .join('')}
     </ul>
