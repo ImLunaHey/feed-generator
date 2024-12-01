@@ -137,7 +137,7 @@ app.get('/stats/tags', async (ctx) => {
   const sorted = Object.fromEntries(
     Object.entries(stats)
       .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
-      .sort(([, a], [, b]) => b - a),
+      .sort(([tagA, countA], [tagB, countB]) => countB - countA || tagA.localeCompare(tagB)),
   );
 
   return ctx.html(`
