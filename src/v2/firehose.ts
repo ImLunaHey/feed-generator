@@ -33,7 +33,7 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
     .onConflict((oc) => oc.doNothing())
     .execute();
 
-  if (event.commit.record.tags) {
+  if (event.commit.record.tags && event.commit.record.tags.length > 0) {
     console.info(
       `Post at://${event.did}/app.bsky.feed.post/${event.commit.rkey} has tags: ${JSON.stringify(event.commit.record.tags)}`,
     );
