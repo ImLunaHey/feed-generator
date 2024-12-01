@@ -280,9 +280,6 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
         cfg: {
           ...ctx.get('config'),
           port: Number(ctx.get('config').port),
-          listenhost: ctx.get('config').hostname,
-          subscriptionEndpoint: 'wss://bsky.network',
-          subscriptionReconnectDelay: 3000,
         },
       },
       {
@@ -368,9 +365,6 @@ const main = async () => {
         config: {
           ...config,
           port: Number(config.port),
-          listenhost: config.hostname,
-          subscriptionEndpoint: 'wss://bsky.network',
-          subscriptionReconnectDelay: 3000,
         },
       })
       .catch((error) => {
@@ -385,9 +379,6 @@ const main = async () => {
           config: {
             ...config,
             port: Number(config.port),
-            listenhost: config.hostname,
-            subscriptionEndpoint: 'wss://bsky.network',
-            subscriptionReconnectDelay: 3000,
           },
         })
         .catch((error) => {
