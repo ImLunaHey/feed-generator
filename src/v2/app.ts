@@ -50,7 +50,7 @@ const validateAuth = async (req: HonoRequest) => {
 app.use('/*', cors());
 
 app.get('/stats', async (ctx) => {
-  const feedStats = await db.selectFrom('feed_stats').selectAll().execute();
+  const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
     if (!acc[stat.feed]) {
       acc[stat.feed] = 0;
