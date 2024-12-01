@@ -55,6 +55,7 @@ app.get('/stats', async (ctx) => {
     <ul>
       <li><a href="/stats/feeds">Feeds</a></li>
       <li><a href="/stats/tags">Tags</a></li>
+      <li><a href="/stats/accounts">Accounts</a></li>
     </ul>
   `);
 });
