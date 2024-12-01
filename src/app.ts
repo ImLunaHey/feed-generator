@@ -56,6 +56,7 @@ app.get('/stats', async (ctx) => {
       <li><a href="/stats/tags">Tags</a></li>
       <li><a href="/stats/accounts">Accounts</a></li>
       <li><a href="/stats/domains">Domains</a></li>
+      <li><a href="/stats/links">Links</a></li>
     </ul>
   `);
 });
@@ -301,6 +302,57 @@ app.get('/stats/domains', async (ctx) => {
     <h2>Domains with more than 1 post</h2>
     <ol>
       ${sorted.map(([domain, count]) => `<li><a href="http://${domain}">${domain}</a> (${count})</li>`).join('')}
+    </ol>
+  `);
+});
+
+app.get('/stats/links/json', async (ctx) => {
+  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+  const links = postLinks.reduce((acc, stat) => {
+    const links_ = stat.links.split(',');
+    for (const link of links_) {
+      try {
+        const url = new URL(link.trim());
+        if (!acc[url.href]) {
+          acc[url.href] = 0;
+        }
+        acc[url.href] += 1;
+      } catch {}
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // sort by link count
+  const sorted = Object.fromEntries(Object.entries(links).sort(([, a], [, b]) => b - a));
+  return ctx.json(sorted);
+});
+
+app.get('/stats/links', async (ctx) => {
+  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+  const links = postLinks.reduce((acc, stat) => {
+    const links_ = stat.links.split(',');
+    for (const link of links_) {
+      try {
+        const url = new URL(link.trim());
+        if (!acc[url.href]) {
+          acc[url.href] = 0;
+        }
+        acc[url.href] += 1;
+      } catch {}
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // sort by link count
+  const sorted = Object.entries(links).sort(([, a], [, b]) => b - a);
+
+  return ctx.html(`
+    <h1>Link Stats</h1>
+    <p>See raw data at <a href="/stats/links/json">/stats/links/json</a></p>
+
+    <h2>Links with more than 1 post</h2>
+    <ol>
+      ${sorted.map(([link, count]) => `<li><a href="${link}">${link}</a> (${count})</li>`).join('')}
     </ol>
   `);
 });
