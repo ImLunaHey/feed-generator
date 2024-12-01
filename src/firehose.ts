@@ -1,6 +1,6 @@
 import { Jetstream } from '@skyware/jetstream';
 import { db } from './db';
-import { Tag } from '../lexicon/types/app/bsky/richtext/facet';
+import { Tag } from './lexicon/types/app/bsky/richtext/facet';
 
 export const jetstream = new Jetstream({
   wantedCollections: ['app.bsky.feed.post', 'app.bsky.feed.like', 'app.bsky.feed.repost'], // omit to receive all collections

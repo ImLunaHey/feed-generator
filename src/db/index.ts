@@ -2,6 +2,7 @@ import SqliteDb from 'better-sqlite3';
 import { CompiledQuery, Kysely, Migrator, SqliteDialect } from 'kysely';
 import { DatabaseSchema } from './schema';
 import { migrationProvider } from './migrations';
+import { config } from '../config';
 
 export const createDb = (location: string): Database => {
   return new Kysely<DatabaseSchema>({
@@ -21,3 +22,5 @@ export const migrateToLatest = async (db: Database) => {
 };
 
 export type Database = Kysely<DatabaseSchema>;
+
+export const db = createDb(config.sqliteLocation);
