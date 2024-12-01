@@ -106,8 +106,8 @@ app.get('/stats/accounts', async (ctx) => {
     })
     .slice(0, Math.ceil(Object.keys(stats).length * 0.1));
 
-  const handles = await Promise.allSettled(sorted.map(async ([author, data]) => didResolver.resolve(author))).then(
-    (results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)).filter(Boolean),
+  const handles = await Promise.allSettled(sorted.map(async ([did]) => didResolver.resolve(did))).then((results) =>
+    results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)),
   );
 
   return ctx.html(`
