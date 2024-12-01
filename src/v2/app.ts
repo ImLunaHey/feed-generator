@@ -59,7 +59,7 @@ app.get('/stats', async (ctx) => {
   `);
 });
 
-app.get('/stats/feeds', async (ctx) => {
+app.get('/stats/feeds/json', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
     if (!acc[stat.feed]) {
@@ -71,6 +71,45 @@ app.get('/stats/feeds', async (ctx) => {
   // sort the fields alphabetically so that sub feeds are grouped together
   const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
   return ctx.json(sorted);
+});
+
+app.get('/stats/feeds', async (ctx) => {
+  const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
+  const stats = feedStats.reduce((acc, stat) => {
+    if (!acc[stat.feed]) {
+      acc[stat.feed] = 0;
+    }
+    acc[stat.feed] += stat.fetches;
+    return acc;
+  }, {} as Record<string, number>);
+  // sort the fields alphabetically so that sub feeds are grouped together
+  const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
+
+  return ctx.html(`
+    <h1>Feed Stats</h1>
+    <p>See raw data at <a href="/stats/feeds/json">/stats/feeds/json</a></p>
+    <ul>
+      ${Object.entries(sorted)
+        .map(([feed, count]) => `<li>${feed} (${count})</li>`)
+        .join('')}
+    </ul>
+  `);
+});
+
+app.get('/stats/tags/json', async (ctx) => {
+  const feedStats = await db.selectFrom('post').select('tags').execute();
+  const stats = feedStats.reduce((acc, stat) => {
+    const tags = stat.tags.split(',');
+    for (const tag of tags) {
+      if (!acc[tag]) {
+        acc[tag] = 0;
+      }
+      acc[tag] += 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  return ctx.json(stats);
 });
 
 app.get('/stats/tags', async (ctx) => {
@@ -86,7 +125,15 @@ app.get('/stats/tags', async (ctx) => {
     return acc;
   }, {} as Record<string, number>);
 
-  return ctx.json(stats);
+  return ctx.html(`
+    <h1>Tag Stats</h1>
+    <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
+    <ul>
+      ${Object.entries(stats)
+        .map(([tag, count]) => `<li><a href="https://bsky.app/hashtag/${tag}">${tag}</a> (${count})</li>`)
+        .join('')}
+    </ul>
+    `);
 });
 
 // Feed Skeleton endpoint
