@@ -254,8 +254,7 @@ app.get('/stats/tags', async (ctx) => {
 });
 
 app.get('/stats/domains/json', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').execute();
-  console.info('[stats] postLinks', JSON.stringify(postLinks));
+  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
   const domains = postLinks.reduce((acc, stat) => {
     const links = stat.links.split(',');
     for (const link of links) {
@@ -267,7 +266,6 @@ app.get('/stats/domains/json', async (ctx) => {
     }
     return acc;
   }, {} as Record<string, number>);
-  console.info('[stats] domains', JSON.stringify(domains));
 
   // sort by link count
   const sorted = Object.fromEntries(Object.entries(domains).sort(([, a], [, b]) => b - a));
@@ -275,7 +273,7 @@ app.get('/stats/domains/json', async (ctx) => {
 });
 
 app.get('/stats/domains', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').execute();
+  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
   const domains = postLinks.reduce((acc, stat) => {
     const links = stat.links.split(',');
     for (const link of links) {
