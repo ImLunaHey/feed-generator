@@ -113,3 +113,19 @@ migrations['006'] = {
     await db.schema.alterTable('post').dropColumn('tags').execute();
   },
 };
+
+migrations['005'] = {
+  async up(db: Kysely<unknown>) {
+    // the primary key for the feed stats should be a composite key
+    await db.schema.dropTable('feed_stats').execute();
+
+    await db.schema
+      .createTable('feed_stats')
+      .addColumn('feed', 'varchar', (col) => col.notNull())
+      .addColumn('user', 'varchar', (col) => col.notNull())
+      .addColumn('fetches', 'integer', (col) => col.notNull())
+      .addPrimaryKeyConstraint('primary_key', ['feed', 'user'])
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {},
+};
