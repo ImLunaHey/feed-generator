@@ -106,10 +106,6 @@ app.get('/stats/accounts', async (ctx) => {
     })
     .slice(0, Math.ceil(Object.keys(stats).length * 0.1));
 
-  const handles = await Promise.allSettled(sorted.map(async ([did]) => didResolver.resolve(did))).then((results) =>
-    results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)),
-  );
-
   return ctx.html(`
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
@@ -119,9 +115,7 @@ app.get('/stats/accounts', async (ctx) => {
       ${sorted
         .map(
           ([did, { likeCount, replyCount }], index) =>
-            `<li><a href="https://bsky.app/profile/${handles[index]?.alsoKnownAs?.[0] ?? did}">${
-              handles[index]?.alsoKnownAs?.[0] ?? did
-            }</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
+            `<li><a href="https://bsky.app/profile/${did}">${did}</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
         )
         .join('')}
     </ul>
