@@ -111,10 +111,12 @@ app.get('/stats/accounts', async (ctx) => {
 
     <h2>Accounts with more than 1 like or reply</h2>
     <ul>
-      ${sorted.map(
-        ([author, { likeCount, replyCount }]) =>
-          `<li><a href="https://bsky.app/profile/${author}">${author}</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
-      )}
+      ${sorted
+        .map(
+          ([author, { likeCount, replyCount }]) =>
+            `<li><a href="https://bsky.app/profile/${author}">${author}</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
+        )
+        .join('')}
     </ul>
   `);
 });
