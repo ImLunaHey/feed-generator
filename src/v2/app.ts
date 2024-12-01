@@ -57,7 +57,7 @@ app.get('/stats', async (ctx) => {
     }
     acc[stat.feed] += stat.fetches;
     return acc;
-  });
+  }, {} as Record<string, number>);
   return ctx.json(stats);
 });
 
