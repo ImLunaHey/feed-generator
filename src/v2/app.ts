@@ -88,9 +88,13 @@ app.get('/stats/feeds', async (ctx) => {
   return ctx.html(`
     <h1>Feed Stats</h1>
     <p>See raw data at <a href="/stats/feeds/json">/stats/feeds/json</a></p>
+
+    <h2>Feeds run by luna</h2>
     <ul>
       ${Object.entries(sorted)
-        .map(([feed, count]) => `<li>${feed} (${count})</li>`)
+        .map(
+          ([feed, count]) => `<li><a href="https://bsky.app/profile/imlunahey.com/feed/${feed}">${feed}</a> (${count})</li>`,
+        )
         .join('')}
     </ul>
   `);
