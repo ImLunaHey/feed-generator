@@ -14,6 +14,7 @@ import * as youtubeVideos from './youtube-videos';
 import * as newsUsa from './news/usa';
 import * as swifities from './swifties';
 import * as buildInPublic from './build-in-public';
+import * as pinned from './pinned';
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams, requesterDid?: string) => Promise<AlgoOutput>;
 
@@ -39,6 +40,7 @@ const algos: Record<
   [newsUsa.shortname]: newsUsa,
   [swifities.shortname]: swifities,
   [buildInPublic.shortname]: buildInPublic,
+  [pinned.shortname]: pinned,
 };
 
 export default algos;

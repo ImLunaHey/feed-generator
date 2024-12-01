@@ -68,6 +68,10 @@ export type Post = {
    * Comma seperated list of links
    */
   links: string;
+  /**
+   * URI of the root post
+   */
+  rootPostUri: string;
 };
 
 export type FeedStats = {

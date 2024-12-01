@@ -45,6 +45,7 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
       links: links.join(',') ?? '',
       tags: tags.join(',') ?? '',
       indexedAt: new Date().toISOString(),
+      rootPostUri: event.commit.record.reply?.root?.uri ?? '',
     })
     .onConflict((oc) => oc.doNothing())
     .execute();

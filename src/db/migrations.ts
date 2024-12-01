@@ -160,3 +160,15 @@ migrations['009'] = {
     await db.schema.alterTable('post').dropColumn('links').execute();
   },
 };
+
+migrations['010'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('post')
+      .addColumn('rootPostUri', 'varchar', (col) => col.notNull().defaultTo(''))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('rootPostUri').execute();
+  },
+};
