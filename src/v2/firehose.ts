@@ -8,6 +8,14 @@ export const jetstream = new Jetstream({
 });
 
 jetstream.onCreate('app.bsky.feed.post', async (event) => {
+  const tags =
+    event.commit.record.facets
+      ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#tag')
+      .map((facet) => {
+        const tag = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
+        return tag;
+      }) ?? [];
+
   await db
     .insertInto('post')
     .values({
@@ -28,24 +36,14 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
           ? 1
           : 0,
       embedUrl: event.commit.record.embed?.$type === 'app.bsky.embed.external' ? event.commit.record.embed.external.uri : '',
-      // tags: event.commit.record.tags?.join(',') ?? '',
-      tags:
-        event.commit.record.facets
-          ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#tag')
-          .map((facet) => {
-            const tag = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
-            return tag;
-          })
-          .join(',') ?? '',
+      tags: tags.join(',') ?? '',
       indexedAt: new Date().toISOString(),
     })
     .onConflict((oc) => oc.doNothing())
     .execute();
 
-  if (event.commit.record.tags && event.commit.record.tags.length > 0) {
-    console.info(
-      `Post at://${event.did}/app.bsky.feed.post/${event.commit.rkey} has tags: ${JSON.stringify(event.commit.record.tags)}`,
-    );
+  if (tags.length > 0) {
+    console.info(`Post at://${event.did}/app.bsky.feed.post/${event.commit.rkey} has tags: ${JSON.stringify(tags)}`);
   }
 });
 
