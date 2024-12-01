@@ -109,17 +109,18 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
             .insertInto('feed_stats')
             .values({ feed: feedUri.rkey, fetches: 1, user: requesterDid || 'guest' })
             .execute();
-          return;
+        } else {
+          await trx
+            .updateTable('feed_stats')
+            .where('feed', '=', feedUri.rkey)
+            .where('user', '=', requesterDid || 'guest')
+            .set((eb) => ({
+              fetches: eb('fetches', '+', 1),
+            }))
+            .execute();
         }
 
-        await trx
-          .updateTable('feed_stats')
-          .where('feed', '=', feedUri.rkey)
-          .where('user', '=', requesterDid || 'guest')
-          .set((eb) => ({
-            fetches: eb('fetches', '+', 1),
-          }))
-          .execute();
+        console.info(`Updated feed stats for algo=${feedUri.rkey} user=${requesterDid || 'guest'}`);
       })
       .catch((error) => {
         {
