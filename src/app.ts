@@ -9,6 +9,22 @@ import { Database, migrateToLatest, db } from './db';
 import { config } from './config';
 import { jetstream } from './firehose';
 
+const createAppWrapper = (html: string) => {
+  return `
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Feed Generator Stats</title>
+      <style>body{font-family:'Courier New',monospace;font-size:.9rem;background-color:#121212;color:#e0e0e0;line-height:1.4;margin:2rem}a:link{color:#55cdfc;text-decoration:none}a:visited{color:#f7a8b8}a:hover{color:#b19cd9;text-decoration:underline}h1,h2{color:#b19cd9;margin-bottom:1rem}</style>
+      </head>
+      <body>
+        ${html}
+      </body>
+    </html>
+  `;
+};
+
 const app = new Hono<{
   Variables: {
     db: Database;
@@ -49,7 +65,8 @@ const validateAuth = async (req: HonoRequest) => {
 app.use('/*', cors());
 
 app.get('/stats', async (ctx) => {
-  return ctx.html(`
+  return ctx.html(
+    createAppWrapper(`
     <h1>Feed Generator Stats</hjson>
     <ul>
       <li><a href="/stats/feeds">Feeds</a></li>
@@ -58,7 +75,8 @@ app.get('/stats', async (ctx) => {
       <li><a href="/stats/domains">Domains</a></li>
       <li><a href="/stats/links">Links</a></li>
     </ul>
-  `);
+  `),
+  );
 });
 
 app.get('/stats/accounts/json', async (ctx) => {
