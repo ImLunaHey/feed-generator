@@ -14,6 +14,16 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
+    .where('post.text', 'not like', '%dems%')
+    .where('post.text', 'not like', '%trump%')
+    .where('post.text', 'not like', '%biden%')
+    .where('post.text', 'not like', '%republican%')
+    .where('post.text', 'not like', '%democrat%')
+    .where('post.altText', 'not like', '%dems%')
+    .where('post.altText', 'not like', '%trump%')
+    .where('post.altText', 'not like', '%biden%')
+    .where('post.altText', 'not like', '%republican%')
+    .where('post.altText', 'not like', '%democrat%')
     .where((eb) =>
       eb.or([
         // Match exact tags by ensuring they're bounded by commas or string edges
