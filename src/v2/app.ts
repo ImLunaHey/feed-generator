@@ -97,7 +97,12 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
     void db
       .transaction()
       .execute(async (trx) => {
-        const feedStats = await trx.selectFrom('feed_stats').selectAll().where('feed', '=', feedUri.rkey).execute();
+        const feedStats = await trx
+          .selectFrom('feed_stats')
+          .selectAll()
+          .where('feed', '=', feedUri.rkey)
+          .where('user', '=', requesterDid || 'guest')
+          .execute();
 
         if (feedStats.length === 0) {
           await trx
