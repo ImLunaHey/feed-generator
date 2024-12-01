@@ -49,6 +49,11 @@ const validateAuth = async (req: HonoRequest) => {
 // Enable CORS
 app.use('/*', cors());
 
+app.get('/stats', async (ctx) => {
+  const feedStats = await db.selectFrom('feed_stats').where('user', '=', 'guest').selectAll().execute();
+  return ctx.json(feedStats);
+});
+
 // Feed Skeleton endpoint
 app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
   try {
@@ -89,6 +94,33 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
       requesterDid,
     );
     console.info(`generated algo=${feedUri.rkey} response=${JSON.stringify(response)}`);
+    void db
+      .transaction()
+      .execute(async (trx) => {
+        const feedStats = await trx.selectFrom('feed_stats').where('feed', '=', feedUri.rkey).execute();
+
+        if (feedStats.length === 0) {
+          await trx
+            .insertInto('feed_stats')
+            .values({ feed: feedUri.rkey, fetches: 1, user: requesterDid || 'guest' })
+            .execute();
+          return;
+        }
+
+        await trx
+          .updateTable('feed_stats')
+          .where('feed', '=', feedUri.rkey)
+          .where('user', '=', requesterDid || 'guest')
+          .set((eb) => ({
+            fetches: eb('fetches', '+', 1),
+          }))
+          .execute();
+      })
+      .catch((error) => {
+        {
+          console.error(`Error updating feed stats`, error);
+        }
+      });
     return ctx.json(response);
   } catch (error) {
     console.error(`Error in feed generation`, String(error));

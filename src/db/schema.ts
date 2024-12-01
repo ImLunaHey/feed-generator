@@ -1,6 +1,7 @@
 export type DatabaseSchema = {
   post: Post;
   sub_state: SubState;
+  feed_stats: FeedStats;
 };
 
 /**
@@ -59,6 +60,21 @@ export type Post = {
    * URL of the embedded content
    */
   embedUrl: string;
+};
+
+export type FeedStats = {
+  /**
+   * The feed
+   */
+  feed: string;
+  /**
+   * The user
+   */
+  user: string;
+  /**
+   * The number of fetches for this feed and user
+   */
+  fetches: number;
 };
 
 export type SubState = {

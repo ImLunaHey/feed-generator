@@ -87,3 +87,17 @@ migrations['004'] = {
     await db.schema.alterTable('post').dropColumn('embedUrl').execute();
   },
 };
+
+migrations['005'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('feed_stats')
+      .addColumn('feed', 'varchar', (col) => col.primaryKey())
+      .addColumn('user', 'varchar', (col) => col.notNull().defaultTo(0))
+      .addColumn('fetches', 'integer', (col) => col.notNull().defaultTo(0))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('feed_stats').execute();
+  },
+};

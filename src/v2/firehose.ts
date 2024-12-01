@@ -1,5 +1,5 @@
 import { Jetstream } from '@skyware/jetstream';
-import { db } from './db.js';
+import { db } from './db';
 
 export const jetstream = new Jetstream({
   wantedCollections: ['app.bsky.feed.post', 'app.bsky.feed.like', 'app.bsky.feed.repost'], // omit to receive all collections
