@@ -50,14 +50,15 @@ const validateAuth = async (req: HonoRequest) => {
 app.use('/*', cors());
 
 app.get('/stats', async (ctx) => {
-  const feed = ctx.req.query('feed') || 'all';
-  const user = ctx.req.query('user') || 'guest';
-  let builder = db.selectFrom('feed_stats').where('user', '=', user).selectAll();
-  if (feed !== 'all') {
-    builder = builder.where('feed', '=', feed);
-  }
-  const feedStats = await builder.execute();
-  return ctx.json(feedStats);
+  const feedStats = await db.selectFrom('feed_stats').selectAll().execute();
+  const stats = feedStats.reduce((acc, stat) => {
+    if (!acc[stat.feed]) {
+      acc[stat.feed] = 0;
+    }
+    acc[stat.feed] += stat.fetches;
+    return acc;
+  });
+  return ctx.json(stats);
 });
 
 // Feed Skeleton endpoint
