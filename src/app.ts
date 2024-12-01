@@ -149,6 +149,7 @@ app.get('/stats/accounts', async (ctx) => {
 
   return ctx.html(
     createAppWrapper(`
+    <a href="/stats">< go back</a>
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
 
@@ -199,6 +200,7 @@ app.get('/stats/feeds', async (ctx) => {
 
   return ctx.html(
     createAppWrapper(`
+    <a href="/stats">< go back</a>
     <h1>Feed Stats</h1>
     <p>See raw data at <a href="/stats/feeds/json">/stats/feeds/json</a></p>
 
@@ -254,6 +256,7 @@ app.get('/stats/tags', async (ctx) => {
 
   return ctx.html(
     createAppWrapper(`
+    <a href="/stats">< go back</a>
     <h1>Tag Stats</h1>
     <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
 
@@ -321,6 +324,7 @@ app.get('/stats/domains', async (ctx) => {
 
   return ctx.html(
     createAppWrapper(`
+    <a href="/stats">< go back</a>
     <h1>Domain Stats</h1>
     <p>See raw data at <a href="/stats/domains/json">/stats/domains/json</a></p>
 
@@ -374,6 +378,7 @@ app.get('/stats/links', async (ctx) => {
 
   return ctx.html(
     createAppWrapper(`
+    <a href="/stats">< go back</a>
     <h1>Link Stats</h1>
     <p>See raw data at <a href="/stats/links/json">/stats/links/json</a></p>
 
