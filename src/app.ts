@@ -147,7 +147,8 @@ app.get('/stats/accounts', async (ctx) => {
     }, {} as Record<string, number>),
   ).sort(([, a], [, b]) => b - a)[0][0];
 
-  return ctx.html(`
+  return ctx.html(
+    createAppWrapper(`
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
 
@@ -166,7 +167,8 @@ app.get('/stats/accounts', async (ctx) => {
         )
         .join('')}
     </ol>
-  `);
+  `),
+  );
 });
 
 app.get('/stats/feeds/json', async (ctx) => {
@@ -195,7 +197,8 @@ app.get('/stats/feeds', async (ctx) => {
   // sort the fields alphabetically so that sub feeds are grouped together
   const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
 
-  return ctx.html(`
+  return ctx.html(
+    createAppWrapper(`
     <h1>Feed Stats</h1>
     <p>See raw data at <a href="/stats/feeds/json">/stats/feeds/json</a></p>
 
@@ -207,7 +210,8 @@ app.get('/stats/feeds', async (ctx) => {
         )
         .join('')}
     </ul>
-  `);
+  `),
+  );
 });
 
 app.get('/stats/tags/json', async (ctx) => {
@@ -248,7 +252,8 @@ app.get('/stats/tags', async (ctx) => {
     .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
     .sort(([tagA, countA], [tagB, countB]) => countB - countA);
 
-  return ctx.html(`
+  return ctx.html(
+    createAppWrapper(`
     <h1>Tag Stats</h1>
     <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
 
@@ -270,7 +275,8 @@ app.get('/stats/tags', async (ctx) => {
         )
         .join('')}
     </ol>
-    `);
+    `),
+  );
 });
 
 app.get('/stats/domains/json', async (ctx) => {
@@ -313,7 +319,8 @@ app.get('/stats/domains', async (ctx) => {
   // sort by link count
   const sorted = Object.entries(domains).sort(([, a], [, b]) => b - a);
 
-  return ctx.html(`
+  return ctx.html(
+    createAppWrapper(`
     <h1>Domain Stats</h1>
     <p>See raw data at <a href="/stats/domains/json">/stats/domains/json</a></p>
 
@@ -321,7 +328,8 @@ app.get('/stats/domains', async (ctx) => {
     <ol>
       ${sorted.map(([domain, count]) => `<li><a href="http://${domain}">${domain}</a> (${count})</li>`).join('')}
     </ol>
-  `);
+  `),
+  );
 });
 
 app.get('/stats/links/json', async (ctx) => {
@@ -364,7 +372,8 @@ app.get('/stats/links', async (ctx) => {
   // sort by link count
   const sorted = Object.entries(links).sort(([, a], [, b]) => b - a);
 
-  return ctx.html(`
+  return ctx.html(
+    createAppWrapper(`
     <h1>Link Stats</h1>
     <p>See raw data at <a href="/stats/links/json">/stats/links/json</a></p>
 
@@ -372,7 +381,8 @@ app.get('/stats/links', async (ctx) => {
     <ol>
       ${sorted.map(([link, count]) => `<li><a href="${link}">${link}</a> (${count})</li>`).join('')}
     </ol>
-  `);
+  `),
+  );
 });
 
 // Feed Skeleton endpoint
