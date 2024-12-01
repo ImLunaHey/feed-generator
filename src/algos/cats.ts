@@ -14,7 +14,14 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .selectAll()
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
-    .where('post.text', 'like', '%cat%')
+    .where((eb) =>
+      eb.or([
+        eb('post.tags', 'like', '%cat%'),
+        eb('post.tags', 'like', '%kitten%'),
+        eb('post.altText', 'like', '%cat%'),
+        eb('post.altText', 'like', '%kitten%'),
+      ]),
+    )
     .limit(limit);
 
   if (params.cursor) {

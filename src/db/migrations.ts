@@ -129,3 +129,22 @@ migrations['007'] = {
   },
   async down(db: Kysely<unknown>) {},
 };
+
+migrations['008'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('hasAlt').execute();
+
+    await db.schema
+      .alterTable('post')
+      .addColumn('altText', 'varchar', (col) => col.notNull().defaultTo(''))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('post')
+      .addColumn('hasAlt', 'integer', (col) => col.notNull().defaultTo(0))
+      .execute();
+
+    await db.schema.alterTable('post').dropColumn('altText').execute();
+  },
+};

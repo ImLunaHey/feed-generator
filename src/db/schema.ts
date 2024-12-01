@@ -53,9 +53,9 @@ export type Post = {
    */
   hasImage: number;
   /**
-   * Whether the post has an alt text
+   * JSON array of alt text for each image
    */
-  hasAlt: number;
+  altText: string;
   /**
    * URL of the embedded content
    */

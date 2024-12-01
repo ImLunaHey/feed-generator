@@ -28,13 +28,12 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
       replies: 0,
       labels: event.commit.record.labels?.values?.map((label) => label.val).join(',') ?? '',
       hasImage: event.commit.record.embed?.$type === 'app.bsky.embed.images' ? 1 : 0,
-      hasAlt:
+      altText:
         event.commit.record.embed &&
-        ('images' in event.commit.record.embed ? event.commit.record.embed.images : [])?.some(
-          (img) => img.alt && img.alt?.trim().length > 0,
-        )
-          ? 1
-          : 0,
+        'images' in event.commit.record.embed &&
+        event.commit.record.embed.images.some((image) => image.alt)
+          ? JSON.stringify(event.commit.record.embed.images.map((image) => image.alt))
+          : '',
       embedUrl: event.commit.record.embed?.$type === 'app.bsky.embed.external' ? event.commit.record.embed.external.uri : '',
       tags: tags.join(',') ?? '',
       indexedAt: new Date().toISOString(),
