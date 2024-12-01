@@ -41,10 +41,6 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
     })
     .onConflict((oc) => oc.doNothing())
     .execute();
-
-  if (tags.length > 0) {
-    console.info(`Post at://${event.did}/app.bsky.feed.post/${event.commit.rkey} has tags: ${JSON.stringify(tags)}`);
-  }
 });
 
 jetstream.onDelete('app.bsky.feed.post', async (event) => {
