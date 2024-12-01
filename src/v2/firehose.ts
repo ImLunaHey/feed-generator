@@ -12,8 +12,8 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
     event.commit.record.facets
       ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#tag')
       .map((facet) => {
-        const tag = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
-        return tag;
+        const feature = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
+        return feature.tag;
       }) ?? [];
 
   await db
