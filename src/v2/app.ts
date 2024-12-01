@@ -62,11 +62,10 @@ app.get('/stats', async (ctx) => {
 app.get('/stats/feeds/json', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
-    const feed = stat.feed.toLowerCase();
-    if (!acc[feed]) {
-      acc[feed] = 0;
+    if (!acc[stat.feed]) {
+      acc[stat.feed] = 0;
     }
-    acc[feed] += stat.fetches;
+    acc[stat.feed] += stat.fetches;
     return acc;
   }, {} as Record<string, number>);
   // sort the fields alphabetically so that sub feeds are grouped together
@@ -77,11 +76,10 @@ app.get('/stats/feeds/json', async (ctx) => {
 app.get('/stats/feeds', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
-    const feed = stat.feed.toLowerCase();
-    if (!acc[feed]) {
-      acc[feed] = 0;
+    if (!acc[stat.feed]) {
+      acc[stat.feed] = 0;
     }
-    acc[feed] += stat.fetches;
+    acc[stat.feed] += stat.fetches;
     return acc;
   }, {} as Record<string, number>);
   // sort the fields alphabetically so that sub feeds are grouped together
@@ -106,7 +104,8 @@ app.get('/stats/tags/json', async (ctx) => {
   const feedStats = await db.selectFrom('post').select('tags').execute();
   const stats = feedStats.reduce((acc, stat) => {
     const tags = stat.tags.split(',');
-    for (const tag of tags) {
+    for (const tag_ of tags) {
+      const tag = tag_.trim().toLowerCase();
       if (!acc[tag]) {
         acc[tag] = 0;
       }
@@ -124,7 +123,8 @@ app.get('/stats/tags', async (ctx) => {
   const feedStats = await db.selectFrom('post').select('tags').execute();
   const stats = feedStats.reduce((acc, stat) => {
     const tags = stat.tags.split(',');
-    for (const tag of tags) {
+    for (const tag_ of tags) {
+      const tag = tag_.trim().toLowerCase();
       if (!acc[tag]) {
         acc[tag] = 0;
       }
