@@ -16,8 +16,23 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
     .orderBy('cid', 'desc')
     .where((eb) =>
       eb.or([
-        eb('post.tags', 'like', '%cat%'),
-        eb('post.tags', 'like', '%kitten%'),
+        // Match exact tags by ensuring they're bounded by commas or string edges
+        eb('post.tags', 'like', 'cat,%'), // Starts with "cat"
+        eb('post.tags', 'like', '%,cat,%'), // Has "cat" in middle
+        eb('post.tags', 'like', '%,cat'), // Ends with "cat"
+        eb('post.tags', '=', 'cat'), // Is exactly "cat"
+
+        eb('post.tags', 'like', 'cats,%'), // Same pattern for "cats"
+        eb('post.tags', 'like', '%,cats,%'),
+        eb('post.tags', 'like', '%,cats'),
+        eb('post.tags', '=', 'cats'),
+
+        eb('post.tags', 'like', 'kitten,%'), // And for "kitten"
+        eb('post.tags', 'like', '%,kitten,%'),
+        eb('post.tags', 'like', '%,kitten'),
+        eb('post.tags', '=', 'kitten'),
+
+        // Keep partial matches for alt text
         eb('post.altText', 'like', '%cat%'),
         eb('post.altText', 'like', '%kitten%'),
       ]),
