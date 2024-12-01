@@ -9,6 +9,7 @@ import * as luna from './luna';
 import * as viewers from './viewers';
 import * as noAlt from './no-alt';
 import * as youtubeVideos from './youtube-videos';
+import * as newsUsa from './news/usa';
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams, requesterDid?: string) => Promise<AlgoOutput>;
 
@@ -29,6 +30,7 @@ const algos: Record<
   [viewers.shortname]: viewers,
   [noAlt.shortname]: noAlt,
   [youtubeVideos.shortname]: youtubeVideos,
+  [newsUsa.shortname]: newsUsa,
 };
 
 export default algos;
