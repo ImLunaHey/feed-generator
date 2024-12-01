@@ -33,7 +33,9 @@ jetstream.onCreate('app.bsky.feed.post', async (event) => {
     .onConflict((oc) => oc.doNothing())
     .execute();
 
-  console.info('post tags:', event.commit.record.tags?.join(','));
+  if (event.commit.record.tags) {
+    console.info('post tags:', event.commit.record.tags?.join(','));
+  }
 });
 
 jetstream.onDelete('app.bsky.feed.post', async (event) => {
