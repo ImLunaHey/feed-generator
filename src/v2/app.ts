@@ -59,6 +59,65 @@ app.get('/stats', async (ctx) => {
   `);
 });
 
+app.get('/stats/accounts/json', async (ctx) => {
+  const accountStats = await db
+    .selectFrom('post')
+    .select('author')
+    .select('likes as likeCount')
+    .select('replies as replyCount')
+    .execute();
+
+  const stats = accountStats.reduce((acc, stat) => {
+    if (!acc[stat.author]) {
+      acc[stat.author] = { likeCount: 0, replyCount: 0 };
+    }
+    acc[stat.author].likeCount += stat.likeCount;
+    acc[stat.author].replyCount += stat.replyCount;
+    return acc;
+  }, {} as Record<string, { likeCount: number; replyCount: number }>);
+  return ctx.json(stats);
+});
+
+app.get('/stats/accounts', async (ctx) => {
+  const accountStats = await db
+    .selectFrom('post')
+    .select('author')
+    .select('likes as likeCount')
+    .select('replies as replyCount')
+    .execute();
+
+  const stats = accountStats.reduce((acc, stat) => {
+    if (!acc[stat.author]) {
+      acc[stat.author] = { likeCount: 0, replyCount: 0 };
+    }
+    acc[stat.author].likeCount += stat.likeCount;
+    acc[stat.author].replyCount += stat.replyCount;
+    return acc;
+  }, {} as Record<string, { likeCount: number; replyCount: number }>);
+
+  // get the top 10% of accounts
+  const sorted = Object.entries(stats)
+    .sort(([, { likeCount: aLikes, replyCount: aReplies }], [, { likeCount: bLikes, replyCount: bReplies }]) => {
+      const aTotal = aLikes + aReplies;
+      const bTotal = bLikes + bReplies;
+      return bTotal - aTotal;
+    })
+    .slice(0, Math.ceil(Object.keys(stats).length * 0.1));
+
+  return ctx.html(`
+    <h1>Account Stats</h1>
+    <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
+
+    <h2>Accounts with more than 1 like or reply</h2>
+    <ul>
+      ${sorted.map(
+        ([author, { likeCount, replyCount }]) =>
+          `<li><a href="https://bsky.app/profile/${author}">${author}</a> Likes: ${likeCount}, Replies: ${replyCount}</li>`,
+      )}
+    </ul>
+  `);
+});
+
 app.get('/stats/feeds/json', async (ctx) => {
   const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
   const stats = feedStats.reduce((acc, stat) => {
