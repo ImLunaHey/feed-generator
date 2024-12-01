@@ -59,8 +59,8 @@ app.get('/stats', async (ctx) => {
     return acc;
   }, {} as Record<string, number>);
   // sort the fields alphabetically so that sub feeds are grouped together
-  const sorted = Object.entries(stats).sort(([a], [b]) => a.localeCompare(b));
-  return ctx.json(stats);
+  const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
+  return ctx.json(sorted);
 });
 
 // Feed Skeleton endpoint
