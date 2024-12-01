@@ -21,7 +21,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
         },
         {
           // netherlands test post
-          post: 'at://did:plc:j7d55pifcqneuox644o7adp6/app.bsky.feed.post/3lc5ni2yvkk27',
+          post: 'at://did:plc:j7d55pifcqneuox644o7adp6/app.bsky.feed.post/3lcafarunjc2h',
         },
       ],
     };
@@ -37,7 +37,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, requesterDid
       },
       {
         // netherlands test post
-        post: 'at://did:plc:j7d55pifcqneuox644o7adp6/app.bsky.feed.post/3lc5ni2yvkk27',
+        post: 'at://did:plc:j7d55pifcqneuox644o7adp6/app.bsky.feed.post/3lcafarunjc2h',
       },
     ],
   };
