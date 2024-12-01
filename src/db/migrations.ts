@@ -114,7 +114,7 @@ migrations['006'] = {
   },
 };
 
-migrations['005'] = {
+migrations['007'] = {
   async up(db: Kysely<unknown>) {
     // the primary key for the feed stats should be a composite key
     await db.schema.dropTable('feed_stats').execute();
