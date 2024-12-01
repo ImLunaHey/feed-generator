@@ -60,6 +60,10 @@ export type Post = {
    * URL of the embedded content
    */
   embedUrl: string;
+  /**
+   * Comma seperated list of tags
+   */
+  tags: string;
 };
 
 export type FeedStats = {

@@ -101,3 +101,15 @@ migrations['005'] = {
     await db.schema.dropTable('feed_stats').execute();
   },
 };
+
+migrations['006'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('post')
+      .addColumn('tags', 'varchar', (col) => col.notNull().defaultTo(''))
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable('post').dropColumn('tags').execute();
+  },
+};
