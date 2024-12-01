@@ -254,7 +254,7 @@ app.get('/stats/tags', async (ctx) => {
 });
 
 app.get('/stats/domains/json', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').limit(10).execute();
   console.info('[stats] postLinks', JSON.stringify(postLinks));
   const domains = postLinks.reduce((acc, stat) => {
     const links = stat.links.split(',');
@@ -275,7 +275,7 @@ app.get('/stats/domains/json', async (ctx) => {
 });
 
 app.get('/stats/domains', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').limit(10).execute();
   const domains = postLinks.reduce((acc, stat) => {
     const links = stat.links.split(',');
     for (const link of links) {
