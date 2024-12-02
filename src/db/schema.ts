@@ -1,9 +1,3 @@
-export type DatabaseSchema = {
-  post: Post;
-  sub_state: SubState;
-  feed_stats: FeedStats;
-};
-
 /**
  * Comma seperated list of languages
  *
@@ -74,6 +68,44 @@ export type Post = {
   rootPostUri: string;
 };
 
+export type Block = {
+  /**
+   * rKey of the block
+   */
+  id: string;
+  /**
+   * The account doing the blocking
+   */
+  blocker: string;
+  /**
+   * The account being blocked
+   */
+  blocked: string;
+  /**
+   * When the block was created
+   */
+  createdAt: string;
+};
+
+export type Follow = {
+  /**
+   * rKey of the follow
+   */
+  id: string;
+  /**
+   * The account doing the following
+   */
+  follower: string;
+  /**
+   * The account being followed
+   */
+  followed: string;
+  /**
+   * When the follow was created
+   */
+  createdAt: string;
+};
+
 export type FeedStats = {
   /**
    * The feed
@@ -92,4 +124,12 @@ export type FeedStats = {
 export type SubState = {
   service: string;
   cursor: number;
+};
+
+export type DatabaseSchema = {
+  post: Post;
+  sub_state: SubState;
+  feed_stats: FeedStats;
+  block: Block;
+  follow: Follow;
 };

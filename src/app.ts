@@ -455,6 +455,78 @@ app.get('/stats/pinned', async (ctx) => {
   );
 });
 
+app.get('/stats/blocks/json', async (ctx) => {
+  // how many blocks each user has
+  const blocks = await db
+    .selectFrom('block')
+    .select(['blocker', db.fn.count('blocker').as('blockCount')])
+    .groupBy('blocker')
+    .orderBy('blockCount', 'desc')
+    .limit(100)
+    .execute();
+
+  // how many times a user has been blocked
+  const blocked = await db
+    .selectFrom('block')
+    .select(['blocked', db.fn.count('blocked').as('blockedCount')])
+    .groupBy('blocked')
+    .orderBy('blockedCount', 'desc')
+    .limit(100)
+    .execute();
+
+  return ctx.json({ blocks, blocked });
+});
+
+app.get('/stats/blocks', async (ctx) => {
+  // how many blocks each user has
+  const blockerStats = await db
+    .selectFrom('block')
+    .select(['blocker', db.fn.count('blocker').as('blockCount')])
+    .groupBy('blocker')
+    .orderBy('blockCount', 'desc')
+    .limit(100)
+    .execute();
+
+  // how many times a user has been blocked
+  const blockedStats = await db
+    .selectFrom('block')
+    .select(['blocked', db.fn.count('blocked').as('blockedCount')])
+    .groupBy('blocked')
+    .orderBy('blockedCount', 'desc')
+    .limit(100)
+    .execute();
+
+  return ctx.html(
+    createAppWrapper(`
+    <a href="/stats">&lt; go back</a>
+    <h1>Block Stats</h1>
+    <p>See raw data at <a href="/stats/blocks/json">/stats/blocks/json</a></p>
+
+    <h2>Block Stats</h2>
+    <p>Top 100 blockers in the last hour</p>
+    <ol>
+      ${blockerStats
+        .map(
+          ({ blocker, blockCount }) =>
+            `<li><a href="https://bsky.app/profile/${blocker}">${blocker}</a> has blocked ${blockCount} users</li>`,
+        )
+        .join('')}
+    </ol>
+
+    <h2>Blocked Stats</h2>
+    <p>Top 100 blocked users in the last hour</p>
+    <ol>
+      ${blockedStats
+        .map(
+          ({ blocked, blockedCount }) =>
+            `<li><a href="https://bsky.app/profile/${blocked}">${blocked}</a> has been blocked ${blockedCount} times</li>`,
+        )
+        .join('')}
+    </ol>
+  `),
+  );
+});
+
 // Feed Skeleton endpoint
 app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
   try {

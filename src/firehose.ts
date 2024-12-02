@@ -2,7 +2,13 @@ import { Jetstream } from '@skyware/jetstream';
 import { db } from './db';
 
 export const jetstream = new Jetstream({
-  wantedCollections: ['app.bsky.feed.post', 'app.bsky.feed.like', 'app.bsky.feed.repost'], // omit to receive all collections
+  wantedCollections: [
+    'app.bsky.feed.post',
+    'app.bsky.feed.like',
+    'app.bsky.feed.repost',
+    'app.bsky.graph.block',
+    'app.bsky.graph.follow',
+  ], // omit to receive all collections
   wantedDids: [],
 });
 
@@ -75,11 +81,55 @@ jetstream.onCreate('app.bsky.feed.repost', async (event) => {
     .execute();
 });
 
+jetstream.onCreate('app.bsky.graph.block', async (event) => {
+  await db
+    .insertInto('block')
+    .values({
+      id: event.commit.rkey,
+      blocker: event.did,
+      blocked: event.commit.record.subject,
+      createdAt: new Date().toISOString(),
+    })
+    .execute();
+});
+
+jetstream.onDelete('app.bsky.graph.block', async (event) => {
+  await db.deleteFrom('block').where('id', '=', event.commit.rkey).execute();
+});
+
+jetstream.onCreate('app.bsky.graph.follow', async (event) => {
+  await db
+    .insertInto('follow')
+    .values({
+      id: event.commit.rkey,
+      follower: event.did,
+      followed: event.commit.record.subject,
+      createdAt: new Date().toISOString(),
+    })
+    .execute();
+});
+
+jetstream.onDelete('app.bsky.graph.follow', async (event) => {
+  await db.deleteFrom('follow').where('id', '=', event.commit.rkey).execute();
+});
+
+const ONE_HOUR = 60 * 60 * 1000;
+
 setInterval(async () => {
   // delete all posts older than 3 hours
-  const cutoff = new Date(Date.now() - 60 * 60 * 1000 * 3);
+  const cutoff = new Date(Date.now() - 3 * ONE_HOUR);
   const results = await db.deleteFrom('post').where('indexedAt', '<', cutoff.toISOString()).execute();
   console.log(`Deleted ${results[0].numDeletedRows} posts`);
+
+  // delete all blocks older than 1 hour
+  const blockCutoff = new Date(Date.now() - ONE_HOUR);
+  const blockResults = await db.deleteFrom('block').where('createdAt', '<', blockCutoff.toISOString()).execute();
+  console.log(`Deleted ${blockResults[0].numDeletedRows} blocks`);
+
+  // delete all follows older than 1 hour
+  const followCutoff = new Date(Date.now() - ONE_HOUR);
+  const followResults = await db.deleteFrom('follow').where('createdAt', '<', followCutoff.toISOString()).execute();
+  console.log(`Deleted ${followResults[0].numDeletedRows} follows`);
 
   // log the db stats
   const postCount = await db
@@ -87,5 +137,16 @@ setInterval(async () => {
     .select(db.fn.countAll().as('count'))
     .executeTakeFirstOrThrow()
     .then((row) => row.count);
-  console.log(`Post count: ${postCount}`);
+  const blockCount = await db
+    .selectFrom('block')
+    .select(db.fn.countAll().as('count'))
+    .executeTakeFirstOrThrow()
+    .then((row) => row.count);
+  const followCount = await db
+    .selectFrom('follow')
+    .select(db.fn.countAll().as('count'))
+    .executeTakeFirstOrThrow()
+    .then((row) => row.count);
+
+  console.info(`Post count: ${postCount}, Block count: ${blockCount}, Follow count: ${followCount}`);
 }, 60 * 1000);

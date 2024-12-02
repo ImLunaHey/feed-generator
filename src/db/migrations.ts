@@ -172,3 +172,27 @@ migrations['010'] = {
     await db.schema.alterTable('post').dropColumn('rootPostUri').execute();
   },
 };
+
+migrations['011'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable('blocks')
+      .addColumn('id', 'varchar', (col) => col.primaryKey())
+      .addColumn('blocker', 'varchar', (col) => col.notNull())
+      .addColumn('blocked', 'varchar', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .execute();
+
+    await db.schema
+      .createTable('follows')
+      .addColumn('id', 'varchar', (col) => col.primaryKey())
+      .addColumn('follower', 'varchar', (col) => col.notNull())
+      .addColumn('followed', 'varchar', (col) => col.notNull())
+      .addColumn('createdAt', 'varchar', (col) => col.notNull())
+      .execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropTable('blocks').execute();
+    await db.schema.dropTable('follows').execute();
+  },
+};
