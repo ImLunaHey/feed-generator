@@ -613,7 +613,7 @@ app.get('/stats/follows', async (ctx) => {
       ${followedStats
         .map(
           ({ followed, followedCount }, index) =>
-            `<li><a href="https://bsky.app/profile/${followed}">${
+            `<li><a href="https://bsky.app/profile/${followed}">@${
               followedHandles[index]?.alsoKnownAs?.[0].split('//')[1] ?? followed
             }</a> has been followed ${followedCount} times</li>`,
         )
