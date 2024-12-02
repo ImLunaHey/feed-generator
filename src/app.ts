@@ -516,7 +516,9 @@ app.get('/stats/blocks', async (ctx) => {
       ${blockerStats
         .map(
           ({ blocker, blockCount }, index) =>
-            `<li><a href="https://bsky.app/profile/${blocker}">@${blockerHandles[index]}</a> has blocked ${blockCount} users</li>`,
+            `<li><a href="https://bsky.app/profile/${blocker}">@${
+              blockerHandles[index] ?? blocker
+            }</a> has blocked ${blockCount} users</li>`,
         )
         .join('')}
     </ol>
@@ -527,7 +529,9 @@ app.get('/stats/blocks', async (ctx) => {
       ${blockedStats
         .map(
           ({ blocked, blockedCount }, index) =>
-            `<li><a href="https://bsky.app/profile/${blocked}">${blockedHandles[index]}</a> has been blocked ${blockedCount} times</li>`,
+            `<li><a href="https://bsky.app/profile/${blocked}">@${
+              blockedHandles[index] ?? blocked
+            }</a> has been blocked ${blockedCount} times</li>`,
         )
         .join('')}
     </ol>
@@ -576,6 +580,14 @@ app.get('/stats/follows', async (ctx) => {
     .limit(100)
     .execute();
 
+  const followerHandles = await Promise.allSettled(
+    followerStats.map(async ({ follower }) => didResolver.resolve(follower)),
+  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+
+  const followedHandles = await Promise.allSettled(
+    followedStats.map(async ({ followed }) => didResolver.resolve(followed)),
+  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+
   return ctx.html(
     createAppWrapper(`
     <a href="/stats">&lt; go back</a>
@@ -587,8 +599,10 @@ app.get('/stats/follows', async (ctx) => {
     <ol>
       ${followerStats
         .map(
-          ({ follower, followCount }) =>
-            `<li><a href="https://bsky.app/profile/${follower}">${follower}</a> has followed ${followCount} users</li>`,
+          ({ follower, followCount }, index) =>
+            `<li><a href="https://bsky.app/profile/${follower}">@${
+              followerHandles[index] ?? follower
+            }</a> has followed ${followCount} users</li>`,
         )
         .join('')}
     </ol>
@@ -598,8 +612,10 @@ app.get('/stats/follows', async (ctx) => {
     <ol>
       ${followedStats
         .map(
-          ({ followed, followedCount }) =>
-            `<li><a href="https://bsky.app/profile/${followed}">${followed}</a> has been followed ${followedCount} times</li>`,
+          ({ followed, followedCount }, index) =>
+            `<li><a href="https://bsky.app/profile/${followed}">${
+              followedHandles[index] ?? followed
+            }</a> has been followed ${followedCount} times</li>`,
         )
         .join('')}
     </ol>
