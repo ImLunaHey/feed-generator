@@ -90,6 +90,7 @@ jetstream.onCreate('app.bsky.graph.block', async (event) => {
       blocked: event.commit.record.subject,
       createdAt: new Date().toISOString(),
     })
+    .onConflict((oc) => oc.doNothing())
     .execute();
 });
 
@@ -106,6 +107,7 @@ jetstream.onCreate('app.bsky.graph.follow', async (event) => {
       followed: event.commit.record.subject,
       createdAt: new Date().toISOString(),
     })
+    .onConflict((oc) => oc.doNothing())
     .execute();
 });
 
