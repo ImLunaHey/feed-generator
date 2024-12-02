@@ -458,7 +458,7 @@ app.get('/stats/pinned', async (ctx) => {
 app.get('/stats/blocks/json', async (ctx) => {
   // how many blocks each user has
   const blocks = await db
-    .selectFrom('block')
+    .selectFrom('blocks')
     .select(['blocker', db.fn.count('blocker').as('blockCount')])
     .groupBy('blocker')
     .orderBy('blockCount', 'desc')
@@ -467,7 +467,7 @@ app.get('/stats/blocks/json', async (ctx) => {
 
   // how many times a user has been blocked
   const blocked = await db
-    .selectFrom('block')
+    .selectFrom('blocks')
     .select(['blocked', db.fn.count('blocked').as('blockedCount')])
     .groupBy('blocked')
     .orderBy('blockedCount', 'desc')
@@ -480,7 +480,7 @@ app.get('/stats/blocks/json', async (ctx) => {
 app.get('/stats/blocks', async (ctx) => {
   // how many blocks each user has
   const blockerStats = await db
-    .selectFrom('block')
+    .selectFrom('blocks')
     .select(['blocker', db.fn.count('blocker').as('blockCount')])
     .groupBy('blocker')
     .orderBy('blockCount', 'desc')
@@ -489,7 +489,7 @@ app.get('/stats/blocks', async (ctx) => {
 
   // how many times a user has been blocked
   const blockedStats = await db
-    .selectFrom('block')
+    .selectFrom('blocks')
     .select(['blocked', db.fn.count('blocked').as('blockedCount')])
     .groupBy('blocked')
     .orderBy('blockedCount', 'desc')
@@ -520,6 +520,78 @@ app.get('/stats/blocks', async (ctx) => {
         .map(
           ({ blocked, blockedCount }) =>
             `<li><a href="https://bsky.app/profile/${blocked}">${blocked}</a> has been blocked ${blockedCount} times</li>`,
+        )
+        .join('')}
+    </ol>
+  `),
+  );
+});
+
+app.get('/stats/follows/json', async (ctx) => {
+  // how many follows each user has
+  const follows = await db
+    .selectFrom('follows')
+    .select(['follower', db.fn.count('follower').as('followCount')])
+    .groupBy('follower')
+    .orderBy('followCount', 'desc')
+    .limit(100)
+    .execute();
+
+  // how many times a user has been followed
+  const followed = await db
+    .selectFrom('follows')
+    .select(['followed', db.fn.count('followed').as('followedCount')])
+    .groupBy('followed')
+    .orderBy('followedCount', 'desc')
+    .limit(100)
+    .execute();
+
+  return ctx.json({ follows, followed });
+});
+
+app.get('/stats/follows', async (ctx) => {
+  // how many follows each user has
+  const followerStats = await db
+    .selectFrom('follows')
+    .select(['follower', db.fn.count('follower').as('followCount')])
+    .groupBy('follower')
+    .orderBy('followCount', 'desc')
+    .limit(100)
+    .execute();
+
+  // how many times a user has been followed
+  const followedStats = await db
+    .selectFrom('follows')
+    .select(['followed', db.fn.count('followed').as('followedCount')])
+    .groupBy('followed')
+    .orderBy('followedCount', 'desc')
+    .limit(100)
+    .execute();
+
+  return ctx.html(
+    createAppWrapper(`
+    <a href="/stats">&lt; go back</a>
+    <h1>Follow Stats</h1>
+    <p>See raw data at <a href="/stats/follows/json">/stats/follows/json</a></p>
+
+    <h2>Follow Stats</h2>
+    <p>Top 100 followers in the last hour</p>
+    <ol>
+      ${followerStats
+        .map(
+          ({ follower, followCount }) =>
+            `<li><a href="https://bsky.app/profile/${follower}">${follower}</a> has followed ${followCount} users</li>`,
+        )
+        .join('')}
+    </ol>
+
+    <h2>Followed Stats</h2>
+    <p>Top 100 followed users in the last hour</p>
+    <ol>
+      ${followedStats
+        .map(
+          ({ followed, followedCount }) =>
+            `<li><a href="https://bsky.app/profile/${followed}">${followed}</a> has been followed ${followedCount} times</li>`,
         )
         .join('')}
     </ol>
