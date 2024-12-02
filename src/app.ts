@@ -517,7 +517,7 @@ app.get('/stats/blocks', async (ctx) => {
         .map(
           ({ blocker, blockCount }, index) =>
             `<li><a href="https://bsky.app/profile/${blocker}">@${
-              blockerHandles[index] ?? blocker
+              blockerHandles[index]?.alsoKnownAs?.[0] ?? blocker
             }</a> has blocked ${blockCount} users</li>`,
         )
         .join('')}
@@ -530,7 +530,7 @@ app.get('/stats/blocks', async (ctx) => {
         .map(
           ({ blocked, blockedCount }, index) =>
             `<li><a href="https://bsky.app/profile/${blocked}">@${
-              blockedHandles[index] ?? blocked
+              blockedHandles[index]?.alsoKnownAs?.[0] ?? blocked
             }</a> has been blocked ${blockedCount} times</li>`,
         )
         .join('')}
@@ -601,7 +601,7 @@ app.get('/stats/follows', async (ctx) => {
         .map(
           ({ follower, followCount }, index) =>
             `<li><a href="https://bsky.app/profile/${follower}">@${
-              followerHandles[index] ?? follower
+              followerHandles[index]?.alsoKnownAs?.[0] ?? follower
             }</a> has followed ${followCount} users</li>`,
         )
         .join('')}
@@ -614,7 +614,7 @@ app.get('/stats/follows', async (ctx) => {
         .map(
           ({ followed, followedCount }, index) =>
             `<li><a href="https://bsky.app/profile/${followed}">${
-              followedHandles[index] ?? followed
+              followedHandles[index]?.alsoKnownAs?.[0] ?? followed
             }</a> has been followed ${followedCount} times</li>`,
         )
         .join('')}
