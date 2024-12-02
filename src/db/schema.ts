@@ -130,6 +130,6 @@ export type DatabaseSchema = {
   post: Post;
   sub_state: SubState;
   feed_stats: FeedStats;
-  block: Block;
-  follow: Follow;
+  blocks: Block;
+  follows: Follow;
 };

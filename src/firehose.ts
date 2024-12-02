@@ -83,7 +83,7 @@ jetstream.onCreate('app.bsky.feed.repost', async (event) => {
 
 jetstream.onCreate('app.bsky.graph.block', async (event) => {
   await db
-    .insertInto('block')
+    .insertInto('blocks')
     .values({
       id: event.commit.rkey,
       blocker: event.did,
@@ -94,12 +94,12 @@ jetstream.onCreate('app.bsky.graph.block', async (event) => {
 });
 
 jetstream.onDelete('app.bsky.graph.block', async (event) => {
-  await db.deleteFrom('block').where('id', '=', event.commit.rkey).execute();
+  await db.deleteFrom('blocks').where('id', '=', event.commit.rkey).execute();
 });
 
 jetstream.onCreate('app.bsky.graph.follow', async (event) => {
   await db
-    .insertInto('follow')
+    .insertInto('follows')
     .values({
       id: event.commit.rkey,
       follower: event.did,
@@ -110,7 +110,7 @@ jetstream.onCreate('app.bsky.graph.follow', async (event) => {
 });
 
 jetstream.onDelete('app.bsky.graph.follow', async (event) => {
-  await db.deleteFrom('follow').where('id', '=', event.commit.rkey).execute();
+  await db.deleteFrom('follows').where('id', '=', event.commit.rkey).execute();
 });
 
 const ONE_HOUR = 60 * 60 * 1000;
@@ -123,12 +123,12 @@ setInterval(async () => {
 
   // delete all blocks older than 1 hour
   const blockCutoff = new Date(Date.now() - ONE_HOUR);
-  const blockResults = await db.deleteFrom('block').where('createdAt', '<', blockCutoff.toISOString()).execute();
+  const blockResults = await db.deleteFrom('blocks').where('createdAt', '<', blockCutoff.toISOString()).execute();
   console.log(`Deleted ${blockResults[0].numDeletedRows} blocks`);
 
   // delete all follows older than 1 hour
   const followCutoff = new Date(Date.now() - ONE_HOUR);
-  const followResults = await db.deleteFrom('follow').where('createdAt', '<', followCutoff.toISOString()).execute();
+  const followResults = await db.deleteFrom('follows').where('createdAt', '<', followCutoff.toISOString()).execute();
   console.log(`Deleted ${followResults[0].numDeletedRows} follows`);
 
   // log the db stats
@@ -138,12 +138,12 @@ setInterval(async () => {
     .executeTakeFirstOrThrow()
     .then((row) => row.count);
   const blockCount = await db
-    .selectFrom('block')
+    .selectFrom('blocks')
     .select(db.fn.countAll().as('count'))
     .executeTakeFirstOrThrow()
     .then((row) => row.count);
   const followCount = await db
-    .selectFrom('follow')
+    .selectFrom('follows')
     .select(db.fn.countAll().as('count'))
     .executeTakeFirstOrThrow()
     .then((row) => row.count);
