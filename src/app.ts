@@ -496,6 +496,14 @@ app.get('/stats/blocks', async (ctx) => {
     .limit(100)
     .execute();
 
+  const blockerHandles = await Promise.allSettled(
+    blockerStats.map(async ({ blocker }) => didResolver.resolve(blocker)),
+  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+
+  const blockedHandles = await Promise.allSettled(
+    blockedStats.map(async ({ blocked }) => didResolver.resolve(blocked)),
+  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+
   return ctx.html(
     createAppWrapper(`
     <a href="/stats">&lt; go back</a>
@@ -507,8 +515,8 @@ app.get('/stats/blocks', async (ctx) => {
     <ol>
       ${blockerStats
         .map(
-          ({ blocker, blockCount }) =>
-            `<li><a href="https://bsky.app/profile/${blocker}">${blocker}</a> has blocked ${blockCount} users</li>`,
+          ({ blocker, blockCount }, index) =>
+            `<li><a href="https://bsky.app/profile/${blocker}">@${blockerHandles[index]}</a> has blocked ${blockCount} users</li>`,
         )
         .join('')}
     </ol>
@@ -518,8 +526,8 @@ app.get('/stats/blocks', async (ctx) => {
     <ol>
       ${blockedStats
         .map(
-          ({ blocked, blockedCount }) =>
-            `<li><a href="https://bsky.app/profile/${blocked}">${blocked}</a> has been blocked ${blockedCount} times</li>`,
+          ({ blocked, blockedCount }, index) =>
+            `<li><a href="https://bsky.app/profile/${blocked}">${blockedHandles[index]}</a> has been blocked ${blockedCount} times</li>`,
         )
         .join('')}
     </ol>
