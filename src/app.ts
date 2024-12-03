@@ -65,6 +65,15 @@ const validateAuth = async (req: HonoRequest) => {
 // Enable CORS
 app.use('/*', cors());
 
+app.get('/', async (ctx) => {
+  return ctx.html(
+    createAppWrapper(`
+    <h1>Feed Generator</h1>
+    <p>Check out the <a href="/stats">stats</a>
+  `),
+  );
+});
+
 app.get('/stats', async (ctx) => {
   return ctx.html(
     createAppWrapper(`
