@@ -17,6 +17,7 @@ const createAppWrapper = (html: string) => {
       <meta charset="UTF-8" />
       <title>Feed Generator Stats</title>
       <style>body{font-family:'Courier New',monospace;font-size:.9rem;background-color:#121212;color:#e0e0e0;line-height:1.4;margin:2rem}a:link{color:#55cdfc;text-decoration:none}a:visited{color:#f7a8b8}a:hover{color:#b19cd9;text-decoration:underline}h1,h2{color:#b19cd9;margin-bottom:1rem}</style>
+      <script defer data-domain="feeds.imlunahey.com" src="https://plausible.io/js/script.js"></script>
       </head>
       <body>
         ${html}
