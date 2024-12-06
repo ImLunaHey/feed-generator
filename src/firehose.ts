@@ -13,48 +13,53 @@ export const jetstream = new Jetstream({
 });
 
 jetstream.onCreate('app.bsky.feed.post', async (event) => {
-  const tags =
-    event.commit.record.facets
-      ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#tag')
-      .map((facet) => {
-        const feature = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
-        return feature.tag;
-      }) ?? [];
+  try {
+    const tags =
+      event.commit.record.facets
+        ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#tag')
+        .map((facet) => {
+          const feature = facet.features[0] as { $type: 'app.bsky.richtext.facet#tag'; tag: string };
+          return feature.tag;
+        }) ?? [];
 
-  const links =
-    event.commit.record.facets
-      ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#link')
-      .map((facet) => {
-        const feature = facet.features[0] as { $type: 'app.bsky.richtext.facet#link'; uri: string };
-        return feature.uri;
-      }) ?? [];
+    const links =
+      event.commit.record.facets
+        ?.filter((facet) => facet.features[0].$type === 'app.bsky.richtext.facet#link')
+        .map((facet) => {
+          const feature = facet.features[0] as { $type: 'app.bsky.richtext.facet#link'; uri: string };
+          return feature.uri;
+        }) ?? [];
 
-  await db
-    .insertInto('post')
-    .values({
-      author: event.did,
-      uri: `at://${event.did}/app.bsky.feed.post/${event.commit.rkey}`,
-      cid: event.commit.cid,
-      text: event.commit.record.text,
-      langs: event.commit.record.langs?.join(',') ?? '',
-      likes: 0,
-      replies: 0,
-      labels: event.commit.record.labels?.values?.map((label) => label.val).join(',') ?? '',
-      hasImage: event.commit.record.embed?.$type === 'app.bsky.embed.images' ? 1 : 0,
-      altText:
-        event.commit.record.embed &&
-        'images' in event.commit.record.embed &&
-        event.commit.record.embed.images.some((image) => image.alt)
-          ? JSON.stringify(event.commit.record.embed.images.map((image) => image.alt))
-          : '',
-      embedUrl: event.commit.record.embed?.$type === 'app.bsky.embed.external' ? event.commit.record.embed.external.uri : '',
-      links: links.join(',') ?? '',
-      tags: tags.join(',') ?? '',
-      indexedAt: new Date().toISOString(),
-      rootPostUri: event.commit.record.reply?.root?.uri ?? '',
-    })
-    .onConflict((oc) => oc.doNothing())
-    .execute();
+    await db
+      .insertInto('post')
+      .values({
+        author: event.did,
+        uri: `at://${event.did}/app.bsky.feed.post/${event.commit.rkey}`,
+        cid: event.commit.cid,
+        text: event.commit.record.text,
+        langs: event.commit.record.langs?.join(',') ?? '',
+        likes: 0,
+        replies: 0,
+        labels: event.commit.record.labels?.values?.map((label) => label.val).join(',') ?? '',
+        hasImage: event.commit.record.embed?.$type === 'app.bsky.embed.images' ? 1 : 0,
+        altText:
+          event.commit.record.embed &&
+          'images' in event.commit.record.embed &&
+          event.commit.record.embed.images.some((image) => image.alt)
+            ? JSON.stringify(event.commit.record.embed.images.map((image) => image.alt))
+            : '',
+        embedUrl:
+          event.commit.record.embed?.$type === 'app.bsky.embed.external' ? event.commit.record.embed.external.uri : '',
+        links: links.join(',') ?? '',
+        tags: tags.join(',') ?? '',
+        indexedAt: new Date().toISOString(),
+        rootPostUri: event.commit.record.reply?.root?.uri ?? '',
+      })
+      .onConflict((oc) => oc.doNothing())
+      .execute();
+  } catch (error) {
+    console.error('Error indexing post', error);
+  }
 });
 
 jetstream.onDelete('app.bsky.feed.post', async (event) => {
