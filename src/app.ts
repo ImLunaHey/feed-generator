@@ -76,34 +76,6 @@ const app = new Hono<{
   };
 }>();
 
-app.use('/*', async (ctx, next) => {
-  ctx.set('db', db);
-  ctx.set('didResolver', didResolver);
-  ctx.set('config', config);
-  return next();
-});
-
-const didCache = new MemoryCache();
-const didResolver = new DidResolver({
-  plcUrl: 'https://plc.directory',
-  didCache,
-});
-
-const validateAuth = async (req: HonoRequest) => {
-  const authorization = req.header('Authorization');
-  if (!authorization || !authorization.startsWith('Bearer ')) {
-    throw new AuthRequiredError();
-  }
-  const jwt = authorization.replace('Bearer ', '').trim();
-  const originalUrl = new URL(req.url).pathname;
-  const nsid_ = originalUrl.replace('/xrpc/', '');
-  const nsid = nsid_.endsWith('/') ? nsid_.slice(0, -1) : nsid_; // trim trailing slash
-  const parsed = await verifyJwt(jwt, config.serviceDid, nsid, async (did: string) => {
-    return didResolver.resolveAtprotoKey(did);
-  });
-  return parsed.iss;
-};
-
 // Enable CORS
 app.use('/*', cors());
 
@@ -131,6 +103,34 @@ app.get('/stats', async (ctx) => {
   `),
   );
 });
+
+app.use('/*', async (ctx, next) => {
+  ctx.set('db', db);
+  ctx.set('didResolver', didResolver);
+  ctx.set('config', config);
+  return next();
+});
+
+const didCache = new MemoryCache();
+const didResolver = new DidResolver({
+  plcUrl: 'https://plc.directory',
+  didCache,
+});
+
+const validateAuth = async (req: HonoRequest) => {
+  const authorization = req.header('Authorization');
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    throw new AuthRequiredError();
+  }
+  const jwt = authorization.replace('Bearer ', '').trim();
+  const originalUrl = new URL(req.url).pathname;
+  const nsid_ = originalUrl.replace('/xrpc/', '');
+  const nsid = nsid_.endsWith('/') ? nsid_.slice(0, -1) : nsid_; // trim trailing slash
+  const parsed = await verifyJwt(jwt, config.serviceDid, nsid, async (did: string) => {
+    return didResolver.resolveAtprotoKey(did);
+  });
+  return parsed.iss;
+};
 
 app.get('/stats/accounts/json', async (ctx) => {
   return withLogging('/stats/accounts/json', async () => {
