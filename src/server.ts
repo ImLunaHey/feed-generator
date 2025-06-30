@@ -7,10 +7,10 @@ import { DidResolver, MemoryCache } from '@atproto/identity';
 import { Database, db } from './db';
 import { config } from './config';
 
-const withLogging = <T>(path: string, fn: () => T): T => {
+const withLogging = async <T>(path: string, fn: () => T): Promise<T> => {
   try {
     const startTime = performance.now();
-    const result = fn();
+    const result = await Promise.resolve(fn());
 
     try {
       return result;
