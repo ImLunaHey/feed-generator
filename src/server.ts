@@ -45,7 +45,7 @@ const withLogging = <T>(path: string, fn: () => T): T => {
     }
   } catch (e) {
     console.error(`${path} | Error: ${e instanceof Error ? e.message : String(e)}`);
-    throw e;
+    throw new Response('Internal Server Error', { status: 500 });
   }
 };
 
@@ -203,7 +203,7 @@ app.get('/stats/accounts', async (ctx) => {
         acc[tld] += 1;
         return acc;
       }, {} as Record<string, number>),
-    ).sort(([, a], [, b]) => b - a)[0][0];
+    ).sort(([, a], [, b]) => b - a)[0]?.[0];
 
     return ctx.html(
       createAppWrapper(`
