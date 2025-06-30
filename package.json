@@ -10,7 +10,9 @@
   "scripts": {
     "publishFeed": "npx tsx scripts/publishFeedGen.ts",
     "unpublishFeed": "npx tsx scripts/unpublishFeedGen.ts",
-    "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/app.ts"
+    "start": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/start-processes.ts",
+    "start:server": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/server-process.ts",
+    "start:generator": "NODE_OPTIONS=\"--experimental-websocket\" npx tsx ./src/generator-process.ts"
   },
   "dependencies": {
     "@atproto/api": "^0.6.20",
