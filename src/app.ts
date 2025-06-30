@@ -77,7 +77,7 @@ app.get('/', async (ctx) => {
 app.get('/stats', async (ctx) => {
   return ctx.html(
     createAppWrapper(`
-    <h1>Feed Generator Stats</hjson>
+    <h1>Feed Generator Stats</h1>
     <ul>
       <li><a href="/stats/feeds">Feeds</a></li>
       <li><a href="/stats/tags">Tags</a></li>
