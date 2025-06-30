@@ -74,6 +74,24 @@ const app = new Hono<{
   };
 }>();
 
+// Health check endpoint
+app.get('/health', (ctx) => ctx.text('OK'));
+
+// Well-known DID configuration
+app.get('/.well-known/did.json', (ctx) => {
+  return ctx.json({
+    '@context': ['https://www.w3.org/ns/did/v1'],
+    id: config.serviceDid,
+    service: [
+      {
+        id: '#bsky_fg',
+        type: 'BskyFeedGenerator',
+        serviceEndpoint: `https://${config.hostname}`,
+      },
+    ],
+  });
+});
+
 // Enable CORS
 app.use('/*', cors());
 
@@ -89,7 +107,7 @@ app.get('/', async (ctx) => {
 });
 
 app.get('/stats', async (ctx) => {
-  return withLogging('/stats/accounts/json', async () => {
+  return withLogging('/stats', async () => {
     return ctx.html(
       createAppWrapper(`
     <h1>Feed Generator Stats</h1>
@@ -799,24 +817,6 @@ app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
         feed: [],
       });
     }
-  });
-});
-
-// Health check endpoint
-app.get('/health', (ctx) => ctx.text('OK'));
-
-// Well-known DID configuration
-app.get('/.well-known/did.json', (ctx) => {
-  return ctx.json({
-    '@context': ['https://www.w3.org/ns/did/v1'],
-    id: config.serviceDid,
-    service: [
-      {
-        id: '#bsky_fg',
-        type: 'BskyFeedGenerator',
-        serviceEndpoint: `https://${config.hostname}`,
-      },
-    ],
   });
 });
 
