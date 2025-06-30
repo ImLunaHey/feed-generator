@@ -111,7 +111,7 @@ app.get('/', async (ctx) => {
   return ctx.html(
     createAppWrapper(`
     <h1>Feed Generator</h1>
-    <p>Check out the <a href="/stats">stats</a>
+    <p>Checkout the <a href="/stats">stats</a> page for some fun data.</p>
   `),
   );
 });
