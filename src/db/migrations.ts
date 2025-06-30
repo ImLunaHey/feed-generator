@@ -196,3 +196,31 @@ migrations['011'] = {
     await db.schema.dropTable('follows').execute();
   },
 };
+
+migrations['012'] = {
+  async up(db: Kysely<unknown>) {
+    // Add indexes for frequently queried columns
+    await db.schema.createIndex('post_author_idx').on('post').column('author').execute();
+
+    await db.schema.createIndex('post_indexed_at_idx').on('post').column('indexedAt').execute();
+
+    await db.schema.createIndex('post_likes_idx').on('post').column('likes').execute();
+
+    await db.schema.createIndex('post_replies_idx').on('post').column('replies').execute();
+
+    await db.schema.createIndex('post_tags_idx').on('post').column('tags').execute();
+
+    await db.schema.createIndex('blocks_created_at_idx').on('blocks').column('createdAt').execute();
+
+    await db.schema.createIndex('follows_created_at_idx').on('follows').column('createdAt').execute();
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema.dropIndex('post_author_idx').execute();
+    await db.schema.dropIndex('post_indexed_at_idx').execute();
+    await db.schema.dropIndex('post_likes_idx').execute();
+    await db.schema.dropIndex('post_replies_idx').execute();
+    await db.schema.dropIndex('post_tags_idx').execute();
+    await db.schema.dropIndex('blocks_created_at_idx').execute();
+    await db.schema.dropIndex('follows_created_at_idx').execute();
+  },
+};

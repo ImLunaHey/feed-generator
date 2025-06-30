@@ -9,6 +9,48 @@ import { Database, migrateToLatest, db } from './db';
 import { config } from './config';
 import { jetstream } from './firehose';
 
+const withLogging = <T>(path: string, fn: () => T): T => {
+  try {
+    const startTime = performance.now();
+    const result = fn();
+
+    try {
+      return result;
+    } finally {
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+
+      // Convert bytes to human-friendly format
+      const formatBytes = (bytes: number): string => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      };
+
+      // Format duration with microsecond precision
+      const formatDuration = (ms: number): string => {
+        if (ms < 1) return `${(ms * 1000).toFixed(2)}μs`;
+        if (ms < 1000) return `${ms.toFixed(2)}ms`;
+        return `${(ms / 1000).toFixed(2)}s`;
+      };
+
+      const responseSize = typeof result === 'string' ? Buffer.byteLength(result, 'utf8') : 0;
+
+      // Fixed-width columns: path (25 chars), duration (12 chars), size (10 chars)
+      const pathColumn = path.length > 25 ? path.substring(0, 22) + '...' : path.padEnd(25);
+      const durationColumn = formatDuration(duration).padStart(12);
+      const sizeColumn = formatBytes(responseSize).padStart(10);
+
+      console.log(`${pathColumn} | Duration: ${durationColumn} | Response size: ${sizeColumn}`);
+    }
+  } catch (e) {
+    console.error(`${path} | Error: ${e instanceof Error ? e.message : String(e)}`);
+    throw e;
+  }
+};
+
 const createAppWrapper = (html: string) => {
   return `
   <!DOCTYPE html>
@@ -91,75 +133,78 @@ app.get('/stats', async (ctx) => {
 });
 
 app.get('/stats/accounts/json', async (ctx) => {
-  const accountStats = await db
-    .selectFrom('post')
-    .select('author')
-    .select('likes as likeCount')
-    .select('replies as replyCount')
-    .execute();
+  return withLogging('/stats/accounts/json', async () => {
+    const accountStats = await db
+      .selectFrom('post')
+      .select('author')
+      .select(db.fn.sum('likes').as('likeCount'))
+      .select(db.fn.sum('replies').as('replyCount'))
+      .groupBy('author')
+      .execute();
 
-  const stats = accountStats.reduce((acc, stat) => {
-    if (!acc[stat.author]) {
-      acc[stat.author] = { likeCount: 0, replyCount: 0 };
-    }
-    acc[stat.author].likeCount += stat.likeCount;
-    acc[stat.author].replyCount += stat.replyCount;
-    return acc;
-  }, {} as Record<string, { likeCount: number; replyCount: number }>);
+    const stats = accountStats.reduce((acc, stat) => {
+      acc[stat.author] = {
+        likeCount: Number(stat.likeCount) || 0,
+        replyCount: Number(stat.replyCount) || 0,
+      };
+      return acc;
+    }, {} as Record<string, { likeCount: number; replyCount: number }>);
 
-  return ctx.json(stats);
+    return ctx.json(stats);
+  });
 });
 
 app.get('/stats/accounts', async (ctx) => {
-  const accountStats = await db
-    .selectFrom('post')
-    .select('author')
-    .select('likes as likeCount')
-    .select('replies as replyCount')
-    .execute();
+  return withLogging('/stats/accounts', async () => {
+    const accountStats = await db
+      .selectFrom('post')
+      .select('author')
+      .select(db.fn.sum('likes').as('likeCount'))
+      .select(db.fn.sum('replies').as('replyCount'))
+      .groupBy('author')
+      .execute();
 
-  const stats = accountStats.reduce((acc, stat) => {
-    if (!acc[stat.author]) {
-      acc[stat.author] = { likeCount: 0, replyCount: 0 };
-    }
-    acc[stat.author].likeCount += stat.likeCount;
-    acc[stat.author].replyCount += stat.replyCount;
-    return acc;
-  }, {} as Record<string, { likeCount: number; replyCount: number }>);
-
-  // get the top 1k accounts by total likes and replies
-  const sorted = Object.entries(stats)
-    .sort(([, { likeCount: aLikes, replyCount: aReplies }], [, { likeCount: bLikes, replyCount: bReplies }]) => {
-      const aTotal = aLikes + aReplies;
-      const bTotal = bLikes + bReplies;
-      return bTotal - aTotal;
-    })
-    .slice(0, 1_000);
-
-  const handles = await Promise.allSettled(sorted.map(async ([did]) => didResolver.resolve(did))).then((results) =>
-    results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)),
-  );
-
-  const mostCommonTld = Object.entries(
-    handles.reduce((acc, handle) => {
-      if (handle?.alsoKnownAs?.[0].endsWith('.bsky.social')) {
-        return acc;
-      }
-      const tld = handle?.alsoKnownAs?.[0].split('.').slice(-1)[0];
-      if (!tld) {
-        return acc;
-      }
-
-      if (!acc[tld]) {
-        acc[tld] = 0;
-      }
-      acc[tld] += 1;
+    const stats = accountStats.reduce((acc, stat) => {
+      acc[stat.author] = {
+        likeCount: Number(stat.likeCount) || 0,
+        replyCount: Number(stat.replyCount) || 0,
+      };
       return acc;
-    }, {} as Record<string, number>),
-  ).sort(([, a], [, b]) => b - a)[0][0];
+    }, {} as Record<string, { likeCount: number; replyCount: number }>);
 
-  return ctx.html(
-    createAppWrapper(`
+    // get the top 1k accounts by total likes and replies
+    const sorted = Object.entries(stats)
+      .sort(([, { likeCount: aLikes, replyCount: aReplies }], [, { likeCount: bLikes, replyCount: bReplies }]) => {
+        const aTotal = aLikes + aReplies;
+        const bTotal = bLikes + bReplies;
+        return bTotal - aTotal;
+      })
+      .slice(0, 1_000);
+
+    const handles = await Promise.allSettled(sorted.map(async ([did]) => didResolver.resolve(did))).then((results) =>
+      results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)),
+    );
+
+    const mostCommonTld = Object.entries(
+      handles.reduce((acc, handle) => {
+        if (handle?.alsoKnownAs?.[0].endsWith('.bsky.social')) {
+          return acc;
+        }
+        const tld = handle?.alsoKnownAs?.[0].split('.').slice(-1)[0];
+        if (!tld) {
+          return acc;
+        }
+
+        if (!acc[tld]) {
+          acc[tld] = 0;
+        }
+        acc[tld] += 1;
+        return acc;
+      }, {} as Record<string, number>),
+    ).sort(([, a], [, b]) => b - a)[0][0];
+
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Account Stats</h1>
     <p>See raw data at <a href="/stats/accounts/json">/stats/accounts/json</a></p>
@@ -179,38 +224,50 @@ app.get('/stats/accounts', async (ctx) => {
         )
         .join('')}
     </ol>
-  `),
-  );
+    `),
+    );
+  });
 });
 
 app.get('/stats/feeds/json', async (ctx) => {
-  const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
-  const stats = feedStats.reduce((acc, stat) => {
-    if (!acc[stat.feed]) {
-      acc[stat.feed] = 0;
-    }
-    acc[stat.feed] += stat.fetches;
-    return acc;
-  }, {} as Record<string, number>);
-  // sort the fields alphabetically so that sub feeds are grouped together
-  const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
-  return ctx.json(sorted);
+  return withLogging('/stats/feeds/json', async () => {
+    const feedStats = await db
+      .selectFrom('feed_stats')
+      .select('feed')
+      .select(db.fn.sum('fetches').as('totalFetches'))
+      .groupBy('feed')
+      .execute();
+
+    const stats = feedStats.reduce((acc, stat) => {
+      acc[stat.feed] = Number(stat.totalFetches) || 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // sort the fields alphabetically so that sub feeds are grouped together
+    const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
+    return ctx.json(sorted);
+  });
 });
 
 app.get('/stats/feeds', async (ctx) => {
-  const feedStats = await db.selectFrom('feed_stats').select('fetches').select('feed').execute();
-  const stats = feedStats.reduce((acc, stat) => {
-    if (!acc[stat.feed]) {
-      acc[stat.feed] = 0;
-    }
-    acc[stat.feed] += stat.fetches;
-    return acc;
-  }, {} as Record<string, number>);
-  // sort the fields alphabetically so that sub feeds are grouped together
-  const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
+  return withLogging('/stats/feeds', async () => {
+    const feedStats = await db
+      .selectFrom('feed_stats')
+      .select('feed')
+      .select(db.fn.sum('fetches').as('totalFetches'))
+      .groupBy('feed')
+      .execute();
 
-  return ctx.html(
-    createAppWrapper(`
+    const stats = feedStats.reduce((acc, stat) => {
+      acc[stat.feed] = Number(stat.totalFetches) || 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // sort the fields alphabetically so that sub feeds are grouped together
+    const sorted = Object.fromEntries(Object.entries(stats).sort(([a], [b]) => a.localeCompare(b)));
+
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Feed Stats</h1>
     <p>See raw data at <a href="/stats/feeds/json">/stats/feeds/json</a></p>
@@ -223,50 +280,60 @@ app.get('/stats/feeds', async (ctx) => {
         )
         .join('')}
     </ul>
-  `),
-  );
+    `),
+    );
+  });
 });
 
 app.get('/stats/tags/json', async (ctx) => {
-  const feedStats = await db.selectFrom('post').select('tags').execute();
-  const stats = feedStats.reduce((acc, stat) => {
-    const tags = stat.tags.split(',');
-    for (const tag_ of tags) {
-      const tag = tag_.trim().toLowerCase();
-      if (!acc[tag]) {
-        acc[tag] = 0;
-      }
-      acc[tag] += 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  return withLogging('/stats/tags/json', async () => {
+    const feedStats = await db.selectFrom('post').select('tags').where('tags', '!=', '').execute();
 
-  // sort by tag count
-  const sorted = Object.fromEntries(Object.entries(stats).sort(([, a], [, b]) => b - a));
-  return ctx.json(sorted);
+    const stats = feedStats.reduce((acc, stat) => {
+      const tags = stat.tags.split(',');
+      for (const tag_ of tags) {
+        const tag = tag_.trim().toLowerCase();
+        if (tag) {
+          if (!acc[tag]) {
+            acc[tag] = 0;
+          }
+          acc[tag] += 1;
+        }
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // sort by tag count
+    const sorted = Object.fromEntries(Object.entries(stats).sort(([, a], [, b]) => b - a));
+    return ctx.json(sorted);
+  });
 });
 
 app.get('/stats/tags', async (ctx) => {
-  const feedStats = await db.selectFrom('post').select('tags').execute();
-  const stats = feedStats.reduce((acc, stat) => {
-    const tags = stat.tags.split(',');
-    for (const tag_ of tags) {
-      const tag = tag_.trim().toLowerCase();
-      if (!acc[tag]) {
-        acc[tag] = 0;
+  return withLogging('/stats/tags', async () => {
+    const feedStats = await db.selectFrom('post').select('tags').where('tags', '!=', '').execute();
+
+    const stats = feedStats.reduce((acc, stat) => {
+      const tags = stat.tags.split(',');
+      for (const tag_ of tags) {
+        const tag = tag_.trim().toLowerCase();
+        if (tag) {
+          if (!acc[tag]) {
+            acc[tag] = 0;
+          }
+          acc[tag] += 1;
+        }
       }
-      acc[tag] += 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+      return acc;
+    }, {} as Record<string, number>);
 
-  // sort by tag count
-  const sorted = Object.entries(stats)
-    .filter(([tag, count]) => count > 1 && tag !== '[object Object]' && tag !== '')
-    .sort(([tagA, countA], [tagB, countB]) => countB - countA);
+    // sort by tag count
+    const sorted = Object.entries(stats)
+      .filter(([tag, count]) => count > 1)
+      .sort(([tagA, countA], [tagB, countB]) => countB - countA);
 
-  return ctx.html(
-    createAppWrapper(`
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Tag Stats</h1>
     <p>See raw data at <a href="/stats/tags/json">/stats/tags/json</a></p>
@@ -290,51 +357,55 @@ app.get('/stats/tags', async (ctx) => {
         .join('')}
     </ol>
     `),
-  );
+    );
+  });
 });
 
 app.get('/stats/domains/json', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
-  const domains = postLinks.reduce((acc, stat) => {
-    const links = stat.links.split(',');
-    for (const link of links) {
-      try {
-        const url = new URL(link.trim());
-        if (!acc[url.hostname]) {
-          acc[url.hostname] = 0;
-        }
-        acc[url.hostname] += 1;
-      } catch {}
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  return withLogging('/stats/domains/json', async () => {
+    const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+    const domains = postLinks.reduce((acc, stat) => {
+      const links = stat.links.split(',');
+      for (const link of links) {
+        try {
+          const url = new URL(link.trim());
+          if (!acc[url.hostname]) {
+            acc[url.hostname] = 0;
+          }
+          acc[url.hostname] += 1;
+        } catch {}
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  // sort by link count
-  const sorted = Object.fromEntries(Object.entries(domains).sort(([, a], [, b]) => b - a));
-  return ctx.json(sorted);
+    // sort by link count
+    const sorted = Object.fromEntries(Object.entries(domains).sort(([, a], [, b]) => b - a));
+    return ctx.json(sorted);
+  });
 });
 
 app.get('/stats/domains', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
-  const domains = postLinks.reduce((acc, stat) => {
-    const links = stat.links.split(',');
-    for (const link of links) {
-      try {
-        const url = new URL(link.trim());
-        if (!acc[url.hostname]) {
-          acc[url.hostname] = 0;
-        }
-        acc[url.hostname] += 1;
-      } catch {}
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  return withLogging('/stats/domains', async () => {
+    const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+    const domains = postLinks.reduce((acc, stat) => {
+      const links = stat.links.split(',');
+      for (const link of links) {
+        try {
+          const url = new URL(link.trim());
+          if (!acc[url.hostname]) {
+            acc[url.hostname] = 0;
+          }
+          acc[url.hostname] += 1;
+        } catch {}
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  // sort by link count
-  const sorted = Object.entries(domains).sort(([, a], [, b]) => b - a);
+    // sort by link count
+    const sorted = Object.entries(domains).sort(([, a], [, b]) => b - a);
 
-  return ctx.html(
-    createAppWrapper(`
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Domain Stats</h1>
     <p>See raw data at <a href="/stats/domains/json">/stats/domains/json</a></p>
@@ -344,51 +415,55 @@ app.get('/stats/domains', async (ctx) => {
       ${sorted.map(([domain, count]) => `<li><a href="http://${domain}">${domain}</a> (${count})</li>`).join('')}
     </ol>
   `),
-  );
+    );
+  });
 });
 
 app.get('/stats/links/json', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
-  const links = postLinks.reduce((acc, stat) => {
-    const links_ = stat.links.split(',');
-    for (const link of links_) {
-      try {
-        const url = new URL(link.trim());
-        if (!acc[url.href]) {
-          acc[url.href] = 0;
-        }
-        acc[url.href] += 1;
-      } catch {}
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  return withLogging('/stats/links/json', async () => {
+    const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+    const links = postLinks.reduce((acc, stat) => {
+      const links_ = stat.links.split(',');
+      for (const link of links_) {
+        try {
+          const url = new URL(link.trim());
+          if (!acc[url.href]) {
+            acc[url.href] = 0;
+          }
+          acc[url.href] += 1;
+        } catch {}
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  // sort by link count
-  const sorted = Object.fromEntries(Object.entries(links).sort(([, a], [, b]) => b - a));
-  return ctx.json(sorted);
+    // sort by link count
+    const sorted = Object.fromEntries(Object.entries(links).sort(([, a], [, b]) => b - a));
+    return ctx.json(sorted);
+  });
 });
 
 app.get('/stats/links', async (ctx) => {
-  const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
-  const links = postLinks.reduce((acc, stat) => {
-    const links_ = stat.links.split(',');
-    for (const link of links_) {
-      try {
-        const url = new URL(link.trim());
-        if (!acc[url.href]) {
-          acc[url.href] = 0;
-        }
-        acc[url.href] += 1;
-      } catch {}
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  return withLogging('/stats/links', async () => {
+    const postLinks = await db.selectFrom('post').select('links').where('links', '!=', '').execute();
+    const links = postLinks.reduce((acc, stat) => {
+      const links_ = stat.links.split(',');
+      for (const link of links_) {
+        try {
+          const url = new URL(link.trim());
+          if (!acc[url.href]) {
+            acc[url.href] = 0;
+          }
+          acc[url.href] += 1;
+        } catch {}
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  // sort by link count
-  const sorted = Object.entries(links).sort(([, a], [, b]) => b - a);
+    // sort by link count
+    const sorted = Object.entries(links).sort(([, a], [, b]) => b - a);
 
-  return ctx.html(
-    createAppWrapper(`
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Link Stats</h1>
     <p>See raw data at <a href="/stats/links/json">/stats/links/json</a></p>
@@ -398,55 +473,59 @@ app.get('/stats/links', async (ctx) => {
       ${sorted.map(([link, count]) => `<li><a href="${link}">${link}</a> (${count})</li>`).join('')}
     </ol>
   `),
-  );
+    );
+  });
 });
 
 app.get('/stats/pinned/json', async (ctx) => {
-  const pinnedStats = await db
-    .selectFrom('post')
-    .select('rootPostUri')
-    .select('cid')
-    .where('rootPostUri', '!=', '')
-    .where('text', 'like', '%📌%')
-    .execute();
+  return withLogging('/stats/pinned/json', async () => {
+    const pinnedStats = await db
+      .selectFrom('post')
+      .select('rootPostUri')
+      .select('cid')
+      .where('rootPostUri', '!=', '')
+      .where('text', 'like', '%📌%')
+      .execute();
 
-  const stats = pinnedStats.reduce((acc, stat) => {
-    if (!acc[stat.rootPostUri]) {
-      acc[stat.rootPostUri] = 0;
-    }
-    acc[stat.rootPostUri] += 1;
-    return acc;
-  }, {} as Record<string, number>);
+    const stats = pinnedStats.reduce((acc, stat) => {
+      if (!acc[stat.rootPostUri]) {
+        acc[stat.rootPostUri] = 0;
+      }
+      acc[stat.rootPostUri] += 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-  return ctx.json(stats);
+    return ctx.json(stats);
+  });
 });
 
 app.get('/stats/pinned', async (ctx) => {
-  const pinnedStats = await db
-    .selectFrom('post')
-    .select('rootPostUri')
-    .select('cid')
-    .where('rootPostUri', '!=', '')
-    .where('text', 'like', '%📌%')
-    .execute();
+  return withLogging('/stats/pinned', async () => {
+    const pinnedStats = await db
+      .selectFrom('post')
+      .select('rootPostUri')
+      .select('cid')
+      .where('rootPostUri', '!=', '')
+      .where('text', 'like', '%📌%')
+      .execute();
 
-  const stats = pinnedStats.reduce((acc, stat) => {
-    if (!acc[stat.rootPostUri]) {
-      acc[stat.rootPostUri] = 0;
-    }
-    acc[stat.rootPostUri] += 1;
-    return acc;
-  }, {} as Record<string, number>);
+    const stats = pinnedStats.reduce((acc, stat) => {
+      if (!acc[stat.rootPostUri]) {
+        acc[stat.rootPostUri] = 0;
+      }
+      acc[stat.rootPostUri] += 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-  // sort by post count
-  const sorted = Object.entries(stats).sort(([, a], [, b]) => b - a);
+    // sort by post count
+    const sorted = Object.entries(stats).sort(([, a], [, b]) => b - a);
 
-  const handles = await Promise.allSettled(
-    sorted.map(async ([postUri]) => didResolver.resolve(postUri.split('//')[1].split('/')[0])),
-  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+    const handles = await Promise.allSettled(
+      sorted.map(async ([postUri]) => didResolver.resolve(postUri.split('//')[1].split('/')[0])),
+    ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
 
-  return ctx.html(
-    createAppWrapper(`
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Pinned Post Stats</h1>
     <p>See raw data at <a href="/stats/pinned/json">/stats/pinned/json</a></p>
@@ -462,60 +541,64 @@ app.get('/stats/pinned', async (ctx) => {
         .join('')}
     </ol>
   `),
-  );
+    );
+  });
 });
 
 app.get('/stats/blocks/json', async (ctx) => {
-  // how many blocks each user has
-  const blocks = await db
-    .selectFrom('blocks')
-    .select(['blocker', db.fn.count('blocker').as('blockCount')])
-    .groupBy('blocker')
-    .orderBy('blockCount', 'desc')
-    .limit(100)
-    .execute();
+  return withLogging('/stats/blocks/json', async () => {
+    // how many blocks each user has
+    const blocks = await db
+      .selectFrom('blocks')
+      .select(['blocker', db.fn.count('blocker').as('blockCount')])
+      .groupBy('blocker')
+      .orderBy('blockCount', 'desc')
+      .limit(100)
+      .execute();
 
-  // how many times a user has been blocked
-  const blocked = await db
-    .selectFrom('blocks')
-    .select(['blocked', db.fn.count('blocked').as('blockedCount')])
-    .groupBy('blocked')
-    .orderBy('blockedCount', 'desc')
-    .limit(100)
-    .execute();
+    // how many times a user has been blocked
+    const blocked = await db
+      .selectFrom('blocks')
+      .select(['blocked', db.fn.count('blocked').as('blockedCount')])
+      .groupBy('blocked')
+      .orderBy('blockedCount', 'desc')
+      .limit(100)
+      .execute();
 
-  return ctx.json({ blocks, blocked });
+    return ctx.json({ blocks, blocked });
+  });
 });
 
 app.get('/stats/blocks', async (ctx) => {
-  // how many blocks each user has
-  const blockerStats = await db
-    .selectFrom('blocks')
-    .select(['blocker', db.fn.count('blocker').as('blockCount')])
-    .groupBy('blocker')
-    .orderBy('blockCount', 'desc')
-    .limit(100)
-    .execute();
+  return withLogging('/stats/blocks', async () => {
+    // how many blocks each user has
+    const blockerStats = await db
+      .selectFrom('blocks')
+      .select(['blocker', db.fn.count('blocker').as('blockCount')])
+      .groupBy('blocker')
+      .orderBy('blockCount', 'desc')
+      .limit(100)
+      .execute();
 
-  // how many times a user has been blocked
-  const blockedStats = await db
-    .selectFrom('blocks')
-    .select(['blocked', db.fn.count('blocked').as('blockedCount')])
-    .groupBy('blocked')
-    .orderBy('blockedCount', 'desc')
-    .limit(100)
-    .execute();
+    // how many times a user has been blocked
+    const blockedStats = await db
+      .selectFrom('blocks')
+      .select(['blocked', db.fn.count('blocked').as('blockedCount')])
+      .groupBy('blocked')
+      .orderBy('blockedCount', 'desc')
+      .limit(100)
+      .execute();
 
-  const blockerHandles = await Promise.allSettled(
-    blockerStats.map(async ({ blocker }) => didResolver.resolve(blocker)),
-  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+    const blockerHandles = await Promise.allSettled(
+      blockerStats.map(async ({ blocker }) => didResolver.resolve(blocker)),
+    ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
 
-  const blockedHandles = await Promise.allSettled(
-    blockedStats.map(async ({ blocked }) => didResolver.resolve(blocked)),
-  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+    const blockedHandles = await Promise.allSettled(
+      blockedStats.map(async ({ blocked }) => didResolver.resolve(blocked)),
+    ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
 
-  return ctx.html(
-    createAppWrapper(`
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Block Stats</h1>
     <p>See raw data at <a href="/stats/blocks/json">/stats/blocks/json</a></p>
@@ -546,60 +629,64 @@ app.get('/stats/blocks', async (ctx) => {
         .join('')}
     </ol>
   `),
-  );
+    );
+  });
 });
 
 app.get('/stats/follows/json', async (ctx) => {
-  // how many follows each user has
-  const follows = await db
-    .selectFrom('follows')
-    .select(['follower', db.fn.count('follower').as('followCount')])
-    .groupBy('follower')
-    .orderBy('followCount', 'desc')
-    .limit(100)
-    .execute();
+  return withLogging('/stats/follows/json', async () => {
+    // how many follows each user has
+    const follows = await db
+      .selectFrom('follows')
+      .select(['follower', db.fn.count('follower').as('followCount')])
+      .groupBy('follower')
+      .orderBy('followCount', 'desc')
+      .limit(100)
+      .execute();
 
-  // how many times a user has been followed
-  const followed = await db
-    .selectFrom('follows')
-    .select(['followed', db.fn.count('followed').as('followedCount')])
-    .groupBy('followed')
-    .orderBy('followedCount', 'desc')
-    .limit(100)
-    .execute();
+    // how many times a user has been followed
+    const followed = await db
+      .selectFrom('follows')
+      .select(['followed', db.fn.count('followed').as('followedCount')])
+      .groupBy('followed')
+      .orderBy('followedCount', 'desc')
+      .limit(100)
+      .execute();
 
-  return ctx.json({ follows, followed });
+    return ctx.json({ follows, followed });
+  });
 });
 
 app.get('/stats/follows', async (ctx) => {
-  // how many follows each user has
-  const followerStats = await db
-    .selectFrom('follows')
-    .select(['follower', db.fn.count('follower').as('followCount')])
-    .groupBy('follower')
-    .orderBy('followCount', 'desc')
-    .limit(100)
-    .execute();
+  return withLogging('/stats/follows', async () => {
+    // how many follows each user has
+    const followerStats = await db
+      .selectFrom('follows')
+      .select(['follower', db.fn.count('follower').as('followCount')])
+      .groupBy('follower')
+      .orderBy('followCount', 'desc')
+      .limit(100)
+      .execute();
 
-  // how many times a user has been followed
-  const followedStats = await db
-    .selectFrom('follows')
-    .select(['followed', db.fn.count('followed').as('followedCount')])
-    .groupBy('followed')
-    .orderBy('followedCount', 'desc')
-    .limit(100)
-    .execute();
+    // how many times a user has been followed
+    const followedStats = await db
+      .selectFrom('follows')
+      .select(['followed', db.fn.count('followed').as('followedCount')])
+      .groupBy('followed')
+      .orderBy('followedCount', 'desc')
+      .limit(100)
+      .execute();
 
-  const followerHandles = await Promise.allSettled(
-    followerStats.map(async ({ follower }) => didResolver.resolve(follower)),
-  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+    const followerHandles = await Promise.allSettled(
+      followerStats.map(async ({ follower }) => didResolver.resolve(follower)),
+    ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
 
-  const followedHandles = await Promise.allSettled(
-    followedStats.map(async ({ followed }) => didResolver.resolve(followed)),
-  ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
+    const followedHandles = await Promise.allSettled(
+      followedStats.map(async ({ followed }) => didResolver.resolve(followed)),
+    ).then((results) => results.map((result) => (result.status === 'fulfilled' ? result.value : undefined)));
 
-  return ctx.html(
-    createAppWrapper(`
+    return ctx.html(
+      createAppWrapper(`
     <a href="/stats">&lt; go back</a>
     <h1>Follow Stats</h1>
     <p>See raw data at <a href="/stats/follows/json">/stats/follows/json</a></p>
@@ -630,84 +717,87 @@ app.get('/stats/follows', async (ctx) => {
         .join('')}
     </ol>
   `),
-  );
+    );
+  });
 });
 
 // Feed Skeleton endpoint
 app.get('/xrpc/app.bsky.feed.getFeedSkeleton', async (ctx) => {
-  try {
-    // Validate the feed parameter
-    const feed = ctx.req.query('feed');
-    if (!feed) throw new InvalidRequestError('Missing feed parameter', 'MissingFeed');
+  return withLogging('/xrpc/app.bsky.feed.getFeedSkeleton', async () => {
+    try {
+      // Validate the feed parameter
+      const feed = ctx.req.query('feed');
+      if (!feed) throw new InvalidRequestError('Missing feed parameter', 'MissingFeed');
 
-    // Parse the feed URI
-    const feedUri = new AtUri(feed);
-    console.info(`generating algo=${feedUri.rkey} query=${JSON.stringify(ctx.req.query())}`);
+      // Parse the feed URI
+      const feedUri = new AtUri(feed);
+      console.info(`generating algo=${feedUri.rkey} query=${JSON.stringify(ctx.req.query())}`);
 
-    // Check if the feed algorithm is supported
-    const algo = algos[feedUri.rkey];
-    if (!algo) throw new InvalidRequestError('Unsupported algorithm', 'UnsupportedAlgorithm');
+      // Check if the feed algorithm is supported
+      const algo = algos[feedUri.rkey];
+      if (!algo) throw new InvalidRequestError('Unsupported algorithm', 'UnsupportedAlgorithm');
 
-    // Only check auth if the algorithm requires it
-    const requiresAuth = algos[feedUri.rkey].requiresAuth;
-    const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
+      // Only check auth if the algorithm requires it
+      const requiresAuth = algos[feedUri.rkey].requiresAuth;
+      const requesterDid = requiresAuth ? await validateAuth(ctx.req) : undefined;
 
-    // Generate the feed
-    const response = await algo.handler(
-      {
-        db: ctx.get('db'),
-        didResolver: ctx.get('didResolver'),
-        cfg: {
-          ...ctx.get('config'),
-          port: Number(ctx.get('config').port),
+      // Generate the feed
+      const response = await algo.handler(
+        {
+          db: ctx.get('db'),
+          didResolver: ctx.get('didResolver'),
+          cfg: {
+            ...ctx.get('config'),
+            port: Number(ctx.get('config').port),
+          },
         },
-      },
-      {
-        feed,
-        limit: Number(ctx.req.query('limit')) || 50,
-        cursor: ctx.req.query('cursor'),
-      },
-      requesterDid,
-    );
-    console.info(`generated algo=${feedUri.rkey} response=${JSON.stringify(response)}`);
-    void db
-      .transaction()
-      .execute(async (trx) => {
-        const feedStats = await trx
-          .selectFrom('feed_stats')
-          .selectAll()
-          .where('feed', '=', feedUri.rkey)
-          .where('user', '=', requesterDid || 'guest')
-          .execute();
-
-        if (feedStats.length === 0) {
-          await trx
-            .insertInto('feed_stats')
-            .values({ feed: feedUri.rkey, fetches: 1, user: requesterDid || 'guest' })
-            .execute();
-        } else {
-          await trx
-            .updateTable('feed_stats')
+        {
+          feed,
+          limit: Number(ctx.req.query('limit')) || 50,
+          cursor: ctx.req.query('cursor'),
+        },
+        requesterDid,
+      );
+      console.info(`generated algo=${feedUri.rkey} response=${JSON.stringify(response)}`);
+      void db
+        .transaction()
+        .execute(async (trx) => {
+          const feedStats = await trx
+            .selectFrom('feed_stats')
+            .selectAll()
             .where('feed', '=', feedUri.rkey)
             .where('user', '=', requesterDid || 'guest')
-            .set((eb) => ({
-              fetches: eb('fetches', '+', 1),
-            }))
             .execute();
-        }
-      })
-      .catch((error) => {
-        {
-          console.error(`Error updating feed stats`, String(error));
-        }
+
+          if (feedStats.length === 0) {
+            await trx
+              .insertInto('feed_stats')
+              .values({ feed: feedUri.rkey, fetches: 1, user: requesterDid || 'guest' })
+              .execute();
+          } else {
+            await trx
+              .updateTable('feed_stats')
+              .where('feed', '=', feedUri.rkey)
+              .where('user', '=', requesterDid || 'guest')
+              .set((eb) => ({
+                fetches: eb('fetches', '+', 1),
+              }))
+              .execute();
+          }
+        })
+        .catch((error) => {
+          {
+            console.error(`Error updating feed stats`, String(error));
+          }
+        });
+      return ctx.json(response);
+    } catch (error) {
+      console.error(`Error in feed generation`, String(error));
+      return ctx.json({
+        feed: [],
       });
-    return ctx.json(response);
-  } catch (error) {
-    console.error(`Error in feed generation`, String(error));
-    return ctx.json({
-      feed: [],
-    });
-  }
+    }
+  });
 });
 
 // Health check endpoint
